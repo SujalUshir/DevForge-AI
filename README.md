@@ -125,6 +125,67 @@ DevForge-AI/
 
 ---
 
+## 🏆 Competition Assets & Release Checklist
+
+### System Topology Diagram
+
+```mermaid
+graph TD
+    User([User Client Browser])
+    
+    subgraph Frontend [Next.js App Workspace]
+        UI[Interactive Portal]
+        SSE[SSE Stream Connection]
+        EXP[Blueprint Explorer]
+        UI -->|POST /generate| SSE
+        EXP -->|GET /artifacts| UI
+    end
+    
+    subgraph Backend [FastAPI Server]
+        API[API Router]
+        BGS[Async Background Task Worker]
+        CM[Shared Project ContextManager]
+        API -->|Starts| BGS
+        BGS -->|Mutates State| CM
+    end
+    
+    subgraph Swarm [Autonomous Agent Swarm]
+        CEO[CEO Agent]
+        PL[Product Lead]
+        MA[Market Analyst]
+        DL[Design Lead]
+        PA[Principal Architect]
+        AG[Artifact Generator]
+        
+        CEO --> PL --> MA --> DL --> PA --> AG
+    end
+    
+    User -->|Accesses| UI
+    UI -->|HTTP requests| API
+    BGS -->|Subscribes & Streams| SSE
+    AG -->|Compiles to disk| EXP
+    Swarm -->|Collaborates via Lock| CM
+```
+
+### ⏱️ 5-Minute Demo Script
+
+| Time | Segment | Description / Script Action |
+|---|---|---|
+| **0:00 - 1:00** | **Hero & About** | Introduce DevForge AI as an autonomous multi-agent platform, highlighting the 11 specialized roles working collaboratively across departments. Show the home page. |
+| **1:00 - 2:00** | **Instant Launch** | Click "⚡ Try Sample Project". Point out how the input form is pre-filled and submitted automatically, bypassing complex parameters to show immediate results. |
+| **2:00 - 3:30** | **Live Event Stream** | Focus on the Live Workspace Dashboard. Explain how the real-time event logs are streamed from FastAPI using Server-Sent Events (SSE) while the progress bar progresses from Planning through Architecture to Review. |
+| **3:30 - 4:30** | **Blueprint Explorer** | When generation completes, showcase the Blueprint Explorer. Click through files (`PRD.md`, `architecture.md`, `api_spec.yaml`). Call attention to the beautiful markdown heading rendering and copy buttons. |
+| **4:30 - 5:00** | **Download Blueprint** | Click "Download Blueprint". Show that it instantly compresses the entire workspace of files on-disk into a single ZIP file and prompts a native browser download. |
+
+### ✅ Submission Checklist
+
+- [x] **Backend Health:** `/api/health`, `/api/projects/version`, and `/api/projects/about` endpoints return success status code.
+- [x] **Testing:** Backend test suite passes all 16/16 unit checks.
+- [x] **Frontend Compilation:** TypeScript compiles cleanly. Build command `npm run build` succeeds in Turbopack production mode with no errors.
+- [x] **ZIP Compressing:** Temporary file creation checks successfully output zip packages.
+
+---
+
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
