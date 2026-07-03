@@ -22,7 +22,7 @@ type ViewState = "landing" | "submission" | "workspace";
 type ExecutionPhase = "PLANNING" | "ARCHITECTURE" | "ENGINEERING" | "VALIDATION" | "REVIEW" | "COMPLETED" | "FAILED";
 
 // Base API configuration URL
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/projects";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/projects";
 
 // ── Custom Markdown Preview Renderer ─────────────────────────────────────────
 

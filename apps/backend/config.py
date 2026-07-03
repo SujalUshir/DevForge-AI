@@ -36,7 +36,7 @@ class Settings(BaseSettings):
 
     # ── CORS ──────────────────────────────────────────────────────
     # The Next.js dev server on port 3000 is always allowed.
-    cors_origins: List[str] = ["http://localhost:3000"]
+    cors_origins: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     # ── Storage ───────────────────────────────────────────────────
     # The workspace directory where generated project blueprints are written.
