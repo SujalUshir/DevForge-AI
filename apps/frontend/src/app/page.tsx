@@ -24,6 +24,57 @@ type ExecutionPhase = "PLANNING" | "ARCHITECTURE" | "ENGINEERING" | "VALIDATION"
 // Base API configuration URL
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/projects";
 
+// ── Custom Markdown Preview Renderer ─────────────────────────────────────────
+
+function renderMarkdownContent(text: string) {
+  const lines = text.split("\n");
+  return (
+    <div className="space-y-2 text-zinc-300 text-sm leading-relaxed">
+      {lines.map((line, idx) => {
+        // Heading 1
+        if (line.startsWith("# ")) {
+          return (
+            <h1 key={idx} className="text-2xl font-black text-white mt-6 mb-3 border-b border-zinc-800 pb-2">
+              {line.replace("# ", "")}
+            </h1>
+          );
+        }
+        // Heading 2
+        if (line.startsWith("## ")) {
+          return (
+            <h2 key={idx} className="text-lg font-bold text-zinc-100 mt-5 mb-2 flex items-center gap-2">
+              <span className="text-indigo-400">#</span> {line.replace("## ", "")}
+            </h2>
+          );
+        }
+        // Heading 3
+        if (line.startsWith("### ")) {
+          return (
+            <h3 key={idx} className="text-md font-semibold text-zinc-200 mt-4 mb-2">
+              {line.replace("### ", "")}
+            </h3>
+          );
+        }
+        // Bullet list
+        if (line.startsWith("- ")) {
+          return (
+            <div key={idx} className="flex items-start gap-2 ml-4 my-1">
+              <span className="text-indigo-500 mt-1.5 h-1.5 w-1.5 rounded-full bg-indigo-500 shrink-0" />
+              <span>{line.replace("- ", "")}</span>
+            </div>
+          );
+        }
+        // Empty line spacer
+        if (line.trim() === "") {
+          return <div key={idx} className="h-2" />;
+        }
+        // Default text paragraph
+        return <p key={idx}>{line}</p>;
+      })}
+    </div>
+  );
+}
+
 export default function Page() {
   // ── State variables ────────────────────────────────────────────────────────
   const [view, setView] = useState<ViewState>("landing");
@@ -47,6 +98,7 @@ export default function Page() {
   // File explorer values
   const [files, setFiles] = useState<FileArtifact[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileArtifact | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const logsEndRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -110,7 +162,7 @@ export default function Page() {
           const newPhase = data.phase as ExecutionPhase;
           setPhase(newPhase);
           
-          // Calculate phase-specific mock progress bar percentages
+          // Calculate phase-specific progress bar percentages
           const progressMap: Record<string, number> = {
             PLANNING: 20,
             ARCHITECTURE: 45,
@@ -154,7 +206,6 @@ export default function Page() {
         }
         else if (eventType === "pipeline_completed") {
           setPhase("COMPLETED");
-          setProgress(105);
           setProgress(100);
           setLogs(prev => [
             ...prev,
@@ -191,10 +242,7 @@ export default function Page() {
 
   // ── Event Handlers ─────────────────────────────────────────────────────────
 
-  const handleStartForge = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!projectName.trim() || !userIdea.trim()) return;
-
+  const triggerSubmitFlow = async (pName: string, pIdea: string, fe: string, be: string, db: string) => {
     setLoading(true);
     setErrorMsg(null);
     setLogs([]);
@@ -206,11 +254,11 @@ export default function Page() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          project_name: projectName,
-          user_idea: userIdea,
-          frontend_stack: frontendStack,
-          backend_stack: backendStack,
-          database_stack: databaseStack
+          project_name: pName,
+          user_idea: pIdea,
+          frontend_stack: fe,
+          backend_stack: be,
+          database_stack: db
         })
       });
 
@@ -233,9 +281,33 @@ export default function Page() {
     }
   };
 
+  const handleStartForge = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!projectName.trim() || !userIdea.trim()) return;
+    triggerSubmitFlow(projectName, userIdea, frontendStack, backendStack, databaseStack);
+  };
+
+  const handleTrySampleProject = () => {
+    const sampleName = "FinTech PayFlow Hub";
+    const sampleIdea = "A robust payment orchestration gateway routing credit card API services dynamically, featuring a dashboard monitor panel and secret scanners.";
+    setProjectName(sampleName);
+    setUserIdea(sampleIdea);
+    setFrontendStack("Next.js + Tailwind");
+    setBackendStack("FastAPI");
+    setDatabaseStack("PostgreSQL");
+    
+    triggerSubmitFlow(sampleName, sampleIdea, "Next.js + Tailwind", "FastAPI", "PostgreSQL");
+  };
+
+  const copyToClipboard = () => {
+    if (!selectedFile) return;
+    navigator.clipboard.writeText(selectedFile.content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const downloadBlueprint = () => {
     if (!projectId) return;
-    // Redirect browser directly to FastAPI download endpoint to prompt ZIP download
     window.location.href = `${API_BASE}/${projectId}/download`;
   };
 
@@ -287,7 +359,7 @@ export default function Page() {
 
             <div className="max-w-4xl text-center flex flex-col items-center gap-8 relative z-10">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-indigo-400 text-xs font-semibold tracking-wide">
-                <span>✦</span> Powered by Multi-Agent Swarms
+                <span>✦</span> Release Candidate 1.0.0-rc1
               </div>
               
               <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white leading-tight">
@@ -304,9 +376,15 @@ export default function Page() {
               <div className="flex flex-col sm:flex-row gap-4 mt-4">
                 <button
                   onClick={() => setView("submission")}
-                  className="px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-lg text-white transition-all shadow-lg glow-indigo flex items-center justify-center gap-2"
+                  className="px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-lg text-white transition-all shadow-lg glow-indigo flex items-center justify-center gap-2 animate-bounce"
                 >
                   Get Started
+                </button>
+                <button
+                  onClick={handleTrySampleProject}
+                  className="px-8 py-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 font-bold text-lg text-zinc-300 transition-all flex items-center justify-center gap-2"
+                >
+                  ⚡ Try Sample Project
                 </button>
               </div>
             </div>
@@ -521,7 +599,7 @@ export default function Page() {
                         key={p.key} 
                         className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
                           isActive 
-                            ? "bg-indigo-500/5 border-indigo-500/30 text-white" 
+                            ? "bg-indigo-500/5 border-indigo-500/30 text-white animate-pulse" 
                             : isPassed 
                               ? "bg-zinc-950/40 border-zinc-900 text-zinc-400"
                               : "bg-zinc-950/20 border-zinc-900/50 text-zinc-600"
@@ -559,8 +637,8 @@ export default function Page() {
                   Active Specialist Agent
                 </h3>
                 
-                <div className="flex items-center gap-4 bg-zinc-950/50 p-4 rounded-xl border border-zinc-800">
-                  <div className="h-12 w-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-2xl animate-pulse-slow">
+                <div className="flex items-center gap-4 bg-zinc-950/50 p-4 rounded-xl border border-zinc-800 animate-pulse-slow">
+                  <div className="h-12 w-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-2xl">
                     🤖
                   </div>
                   <div>
@@ -608,12 +686,20 @@ export default function Page() {
                     Generated Blueprint Explorer
                   </h3>
                   {phase === "COMPLETED" && (
-                    <button
-                      onClick={downloadBlueprint}
-                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 font-bold text-xs text-white rounded-lg transition-all shadow-md glow-indigo flex items-center gap-1.5"
-                    >
-                      Download Blueprint
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={copyToClipboard}
+                        className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 font-bold text-xs rounded-lg transition-all"
+                      >
+                        {copied ? "Copied!" : "Copy"}
+                      </button>
+                      <button
+                        onClick={downloadBlueprint}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 font-bold text-xs text-white rounded-lg transition-all shadow-md glow-indigo flex items-center gap-1.5"
+                      >
+                        Download Blueprint
+                      </button>
+                    </div>
                   )}
                 </div>
 
@@ -643,9 +729,15 @@ export default function Page() {
                       ))}
                     </div>
 
-                    {/* Syntax Code Pane */}
-                    <div className="flex-1 bg-zinc-950/80 border border-zinc-800 rounded-lg p-4 font-mono text-xs overflow-y-auto max-h-[300px] text-zinc-300 whitespace-pre-wrap">
-                      {selectedFile?.content}
+                    {/* Styled Document / Code Preview pane */}
+                    <div className="flex-1 bg-zinc-950/80 border border-zinc-800 rounded-lg p-5 overflow-y-auto max-h-[350px]">
+                      {selectedFile?.language === "markdown" ? (
+                        renderMarkdownContent(selectedFile.content)
+                      ) : (
+                        <pre className="font-mono text-xs text-zinc-300 whitespace-pre-wrap leading-5">
+                          {selectedFile?.content}
+                        </pre>
+                      )}
                     </div>
                   </div>
                 )}
