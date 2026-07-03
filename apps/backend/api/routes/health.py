@@ -37,3 +37,25 @@ async def health_check() -> HealthResponse:
         version=settings.app_version,
         timestamp=datetime.now(tz=timezone.utc),
     )
+
+
+class AboutResponse(BaseModel):
+    name: str
+    tagline: str
+    description: str
+    departments: list[str]
+
+
+@router.get("/version", summary="Get application version")
+async def version_info() -> dict:
+    return {"version": "1.0.0-rc1"}
+
+
+@router.get("/about", response_model=AboutResponse, summary="About DevForge AI")
+async def about_info() -> AboutResponse:
+    return AboutResponse(
+        name="DevForge AI",
+        tagline="Autonomous AI Software Company",
+        description="DevForge AI utilizes specialized swarms of agentic software builders to construct, audit, and deliver production blueprints.",
+        departments=["Management", "Planning", "Architecture", "Engineering", "Validation", "Review"]
+    )
