@@ -129,9 +129,9 @@ export default function Page() {
       if (data.length > 0) {
         setSelectedFile(data[0]);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Fetch artifacts error:", err);
-      setErrorMsg(err.message || "Could not load artifacts.");
+      setErrorMsg(err instanceof Error ? err.message : "Could not load artifacts.");
     }
   };
 
@@ -273,9 +273,9 @@ export default function Page() {
       // Connect real-time log event stream
       connectSSE(result.project_id);
 
-    } catch (err: any) {
+    } catch (err) {
       console.error("Generate submit error:", err);
-      setErrorMsg(err.message || "Could not connect to the backend server.");
+      setErrorMsg(err instanceof Error ? err.message : "Could not connect to the backend server.");
     } finally {
       setLoading(false);
     }
