@@ -74,6 +74,7 @@ def create_application() -> FastAPI:
     )
 
     # ── Middleware (applied in reverse order — last registered runs first) ────
+    app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -81,7 +82,6 @@ def create_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.add_middleware(RequestLoggingMiddleware)
 
     # ── Routes ────────────────────────────────────────────────────────────────
     app.include_router(api_router, prefix="/api")

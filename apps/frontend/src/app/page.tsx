@@ -22,7 +22,16 @@ type ViewState = "landing" | "submission" | "workspace";
 type ExecutionPhase = "PLANNING" | "ARCHITECTURE" | "ENGINEERING" | "VALIDATION" | "REVIEW" | "COMPLETED" | "FAILED";
 
 // Base API configuration URL
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/projects";
+const getApiBase = () => {
+  if (typeof window !== "undefined") {
+    const envUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (envUrl) return envUrl;
+    return `${window.location.protocol}//${window.location.hostname}:8000/api/projects`;
+  }
+  return "http://127.0.0.1:8000/api/projects";
+};
+
+const API_BASE = getApiBase();
 
 // ── Custom Markdown Preview Renderer ─────────────────────────────────────────
 

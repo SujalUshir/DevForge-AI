@@ -9,7 +9,7 @@ type coercion, and validation.
 from pathlib import Path
 from typing import List
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -36,7 +36,23 @@ class Settings(BaseSettings):
 
     # ── CORS ──────────────────────────────────────────────────────
     # The Next.js dev server on port 3000 is always allowed.
-    cors_origins: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    cors_origins: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000", "http://[::1]:3000"]
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        if isinstance(v, str):
+            origins = [o.strip() for o in v.split(",") if o.strip()]
+        elif isinstance(v, list):
+            origins = v
+        else:
+            origins = []
+        
+        defaults = ["http://localhost:3000", "http://127.0.0.1:3000", "http://[::1]:3000"]
+        for d in defaults:
+            if d not in origins:
+                origins.append(d)
+        return origins
 
     # ── Storage ───────────────────────────────────────────────────
     # The workspace directory where generated project blueprints are written.
