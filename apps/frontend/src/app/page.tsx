@@ -26,12 +26,13 @@ const getApiBase = () => {
   if (typeof window !== "undefined") {
     const envUrl = process.env.NEXT_PUBLIC_API_URL;
     if (envUrl) return envUrl;
-    return `${window.location.protocol}//${window.location.hostname}:8000/api/projects`;
   }
   return "http://127.0.0.1:8000/api/projects";
 };
 
 const API_BASE = getApiBase();
+console.log("API_BASE =", API_BASE);
+console.log("Generate URL =", `${API_BASE}/generate`);
 
 // ── Custom Markdown Preview Renderer ─────────────────────────────────────────
 
