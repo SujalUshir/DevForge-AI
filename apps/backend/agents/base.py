@@ -11,6 +11,7 @@ from typing import Any, Dict, Optional
 from context.manager import ContextManager
 from agents.models import AgentStatus, AgentResponse
 from agents.exceptions import AgentInitializationError, AgentExecutionError, AgentValidationError
+from agents.llm_adapter import LLMAdapter
 
 logger = structlog.get_logger(__name__)
 
@@ -27,11 +28,12 @@ class BaseAgent(ABC):
     Coordinates the agent lifecycle and context read/writes.
     """
 
-    def __init__(self, model_name: str = "gemini-1.5-pro", temperature: float = 0.2):
+    def __init__(self, model_name: str = "gemini-2.0-flash", temperature: float = 0.2, llm_adapter: Optional[LLMAdapter] = None):
         self.model_name = model_name
         self.temperature = temperature
         self.status = AgentStatus.IDLE
         self._max_retries = 3
+        self.llm_adapter = llm_adapter or LLMAdapter()
 
     @property
     @abstractmethod

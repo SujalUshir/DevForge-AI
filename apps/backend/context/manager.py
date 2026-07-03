@@ -197,6 +197,14 @@ class ContextManager:
         self._context.metadata.status = status
         await self._persist_state()
 
+    async def update_metadata(self, agent_name: str, update_fn: Callable[[Any], None]) -> None:
+        self.check_lock(agent_name)
+        slice_copy = self._context.metadata.model_copy(deep=True)
+        update_fn(slice_copy)
+        self._context.metadata = slice_copy
+        await self._persist_state()
+
+
     # ── Utilities & Helper Writes ────────────────────────────────────────────
 
     async def log_agent_action(self, agent_name: str, department: str, message: str) -> None:
