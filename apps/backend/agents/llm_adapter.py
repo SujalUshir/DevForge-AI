@@ -2,7 +2,7 @@
 LLM Adapter Layer.
 
 Isolates model-specific logic from BaseAgent. Responsible for:
-- Model invocation (async via google-genai)
+- Model invocation (async via Google ADK)
 - Token accounting & logging
 - Retry logic with exponential backoff
 - Structured JSON output validation (via Pydantic schema validation)
@@ -11,10 +11,13 @@ Isolates model-specific logic from BaseAgent. Responsible for:
 
 import os
 import asyncio
+from uuid import uuid4
 from typing import Any, Dict, Type, Union, Optional
 import structlog
 from pydantic import BaseModel
-from google import genai
+from google.adk.agents import LlmAgent
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
 from google.genai import types
 from google.genai.errors import APIError
 
@@ -28,6 +31,92 @@ class LLMAdapterError(Exception):
     pass
 
 
+class ADKAdapter:
+    """
+    Internal adapter for executing one-shot structured Gemini calls through Google ADK.
+    """
+
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.app_name = "devforge-ai"
+        self.user_id = "devforge-backend"
+        self.session_service = InMemorySessionService()
+
+        # ADK's Gemini model integration reads Google's standard env var.
+        # Preserve the existing DevForge GEMINI_API_KEY contract by bridging it here.
+        if self.api_key:
+            os.environ["GOOGLE_API_KEY"] = self.api_key
+
+    async def generate_structured_output(
+        self,
+        system_instruction: str,
+        prompt: str,
+        response_schema: Type[BaseModel],
+        model: str,
+        temperature: float
+    ) -> BaseModel:
+        output_key = "structured_response"
+        agent = LlmAgent(
+            name="devforge_structured_agent",
+            model=model,
+            instruction=system_instruction,
+            output_schema=response_schema,
+            output_key=output_key,
+            generate_content_config=types.GenerateContentConfig(
+                temperature=temperature
+            ),
+        )
+        runner = Runner(
+            app_name=self.app_name,
+            agent=agent,
+            session_service=self.session_service,
+        )
+        session_id = f"llm-{uuid4().hex}"
+        await self.session_service.create_session(
+            app_name=self.app_name,
+            user_id=self.user_id,
+            session_id=session_id,
+        )
+
+        final_text = ""
+        structured_payload: Optional[Any] = None
+        try:
+            async for event in runner.run_async(
+                user_id=self.user_id,
+                session_id=session_id,
+                new_message=types.UserContent(parts=[types.Part(text=prompt)]),
+            ):
+                state_delta = getattr(
+                    getattr(event, "actions", None),
+                    "state_delta",
+                    None,
+                )
+                if state_delta and output_key in state_delta:
+                    structured_payload = state_delta[output_key]
+
+                if event.is_final_response():
+                    event_text = self._extract_event_text(event)
+                    if event_text:
+                        final_text = event_text
+        finally:
+            await runner.close()
+
+        if structured_payload is not None:
+            return response_schema.model_validate(structured_payload)
+        if final_text:
+            return response_schema.model_validate_json(final_text)
+        raise LLMAdapterError("ADK returned no structured content response.")
+
+    def _extract_event_text(self, event: Any) -> str:
+        content = getattr(event, "content", None)
+        parts = getattr(content, "parts", None) or []
+        return "".join(
+            part.text
+            for part in parts
+            if getattr(part, "text", None) and not getattr(part, "thought", False)
+        )
+
+
 class LLMAdapter:
     """
     Adapter layer connecting agents to Google's Gemini models.
@@ -35,18 +124,22 @@ class LLMAdapter:
     """
 
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or settings.gemini_api_key or os.getenv("GEMINI_API_KEY", "")
+        self.api_key = (
+            settings.gemini_api_key or os.getenv("GEMINI_API_KEY", "")
+            if api_key is None
+            else api_key
+        )
         self.mock_mode = not self.api_key or os.getenv("MOCK_LLM", "false").lower() == "true"
         
-        # Initialize client if API key is present
-        self.client = None
+        # Initialize ADK adapter if API key is present
+        self.adk_adapter = None
         if not self.mock_mode:
             try:
-                self.client = genai.Client(api_key=self.api_key)
-                logger.info("llm_adapter_initialized", mock_mode=False)
+                self.adk_adapter = ADKAdapter(api_key=self.api_key)
+                logger.info("llm_adapter_initialized", mock_mode=False, provider="google_adk")
             except Exception as exc:
                 logger.exception("llm_adapter_init_failed", error=str(exc))
-                logger.warning("llm_adapter_falling_back_to_mock", reason="Client initialization failed")
+                logger.warning("llm_adapter_falling_back_to_mock", reason="ADK initialization failed")
                 self.mock_mode = True
         else:
             logger.info("llm_adapter_initialized", mock_mode=True, reason="API key missing or MOCK_LLM=true")
@@ -71,7 +164,7 @@ class LLMAdapter:
             # Validate schema DDL format
             return response_schema.model_validate(mock_data)
 
-        # Real Gemini API invocation using google-genai client
+        # Real Gemini API invocation through Google ADK
         attempt = 1
         max_attempts = settings.agent_max_retries
         backoff = 2.0
@@ -84,40 +177,19 @@ class LLMAdapter:
                     attempt=attempt,
                     max_attempts=max_attempts
                 )
-                
-                # Configuration specs with system instructions and JSON schemas
-                config = types.GenerateContentConfig(
+
+                if not self.adk_adapter:
+                    raise LLMAdapterError("ADK adapter was not initialized.")
+
+                response = await self.adk_adapter.generate_structured_output(
                     system_instruction=system_instruction,
-                    temperature=temperature,
-                    response_mime_type="application/json",
-                    response_schema=response_schema
-                )
-
-                # Invoke model asynchronously using client.aio
-                response = await self.client.aio.models.generate_content(
+                    prompt=prompt,
+                    response_schema=response_schema,
                     model=model,
-                    contents=prompt,
-                    config=config
+                    temperature=temperature
                 )
-
-                # Token accounting logging
-                usage = getattr(response, "usage_metadata", None)
-                if usage:
-                    logger.info(
-                        "llm_adapter_token_usage",
-                        prompt_tokens=usage.prompt_token_count,
-                        candidates_tokens=usage.candidates_token_count,
-                        total_tokens=usage.total_token_count
-                    )
-                else:
-                    logger.debug("llm_adapter_token_usage_unavailable")
-
-                # Parse and validate structure
-                result_text = response.text
-                if not result_text:
-                    raise LLMAdapterError("Model returned empty content response.")
-
-                return response_schema.model_validate_json(result_text)
+                logger.debug("llm_adapter_token_usage_unavailable", provider="google_adk")
+                return response
 
             except APIError as exc:
                 logger.warning(
