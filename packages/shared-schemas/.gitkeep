@@ -1,0 +1,2 @@
+# Shared JSON schemas used by both backend (Pydantic) and frontend (TypeScript).
+# Initialized in Milestone 4+.

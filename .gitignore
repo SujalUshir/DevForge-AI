@@ -1,24 +1,90 @@
+# ─────────────────────────────────────────────
+# DevForge AI — .gitignore
+# ─────────────────────────────────────────────
+
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
 .venv/
 venv/
+env/
+ENV/
 
-# Node
-node_modules/
+# uv
+# uv.lock
+.uv/
 
-# Environment
+
+# Distribution / packaging
+*.whl
+*.tar.gz
+
+# Environment variables — NEVER commit secrets
 .env
+.env.local
+.env.*.local
 
-# VS Code
-.vscode/
+# Pytest / testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
 
-# macOS
-.DS_Store
+# MyPy / type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
-# Build
+# Node / npm / pnpm / yarn
+node_modules/
+.pnpm-store/
+yarn-error.log
+package-lock.json
+pnpm-lock.yaml
+
+# Next.js
+apps/frontend/.next/
+apps/frontend/out/
+
+# TypeScript
+*.tsbuildinfo
+
+# Build output
 dist/
 build/
 
 # Logs
 *.log
+logs/
+*.log.*
+
+# OS-specific
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+docker-compose.override.yml
+
+# Generated workspace output (project blueprints written to disk)
+workspace/
+
+# Temporary files
+*.tmp
+*.temp
