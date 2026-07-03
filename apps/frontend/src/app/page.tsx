@@ -19,124 +19,10 @@ interface FileArtifact {
 }
 
 type ViewState = "landing" | "submission" | "workspace";
-type ExecutionPhase = "PLANNING" | "ARCHITECTURE" | "ENGINEERING" | "VALIDATION" | "REVIEW" | "COMPLETED";
+type ExecutionPhase = "PLANNING" | "ARCHITECTURE" | "ENGINEERING" | "VALIDATION" | "REVIEW" | "COMPLETED" | "FAILED";
 
-// ── Simulation Data Helpers ──────────────────────────────────────────────────
-
-const MOCK_STEPS = [
-  {
-    phase: "PLANNING",
-    progress: 10,
-    agent: "CEO Agent",
-    dept: "Management",
-    message: "Initializing forge workspace and project context parameters.",
-    type: "info"
-  },
-  {
-    phase: "PLANNING",
-    progress: 18,
-    agent: "Product Lead",
-    dept: "Planning",
-    message: "Started requirements compilation. Drafted persona use cases and functional specifications.",
-    type: "info"
-  },
-  {
-    phase: "PLANNING",
-    progress: 25,
-    agent: "Market Analyst",
-    dept: "Planning",
-    message: "Analyzing competitor SaaS features. Compiled SWOT market report.",
-    type: "info"
-  },
-  {
-    phase: "PLANNING",
-    progress: 32,
-    agent: "Design Lead",
-    dept: "Planning",
-    message: "Structuring visual layout guides and wireframe component specs.",
-    type: "info"
-  },
-  {
-    phase: "ARCHITECTURE",
-    progress: 40,
-    agent: "Principal Architect",
-    dept: "Architecture",
-    message: "Mapping system topology. Created Mermaid C4 gateway and data flow schemas.",
-    type: "info"
-  },
-  {
-    phase: "ARCHITECTURE",
-    progress: 48,
-    agent: "Principal Architect",
-    dept: "Architecture",
-    message: "Drafting microservices framework configurations and design rationale.",
-    type: "success"
-  },
-  {
-    phase: "ENGINEERING",
-    progress: 55,
-    agent: "Backend Lead",
-    dept: "Engineering",
-    message: "Creating OpenAPI routes and compiling database DDL schemas.",
-    type: "info"
-  },
-  {
-    phase: "ENGINEERING",
-    progress: 62,
-    agent: "Frontend Lead",
-    dept: "Engineering",
-    message: "Scaffolding component routes hierarchy and state configurations.",
-    type: "info"
-  },
-  {
-    phase: "VALIDATION",
-    progress: 70,
-    agent: "Security Lead",
-    dept: "Validation",
-    message: "Conducting threat model audit. Sanity checking token sessions and CORS policies.",
-    type: "warning"
-  },
-  {
-    phase: "VALIDATION",
-    progress: 78,
-    agent: "QA Lead",
-    dept: "Validation",
-    message: "Establishing integration and serialization unit test suites.",
-    type: "info"
-  },
-  {
-    phase: "VALIDATION",
-    progress: 85,
-    agent: "Platform Engineer",
-    dept: "Validation",
-    message: "Composing Dockerfiles, docker-compose.yml, and deployment templates.",
-    type: "info"
-  },
-  {
-    phase: "REVIEW",
-    progress: 90,
-    agent: "Engineering Director",
-    dept: "Review",
-    message: "Cross-referencing database structure, API specs, and PRD specifications.",
-    type: "info"
-  },
-  {
-    phase: "REVIEW",
-    progress: 95,
-    agent: "Engineering Director",
-    dept: "Review",
-    message: "All validation gates passed successfully. Signing off on blueprint delivery.",
-    type: "success"
-  },
-  {
-    phase: "COMPLETED",
-    progress: 100,
-    agent: "CEO Agent",
-    dept: "Management",
-    message: "Forge workspace exported successfully. Blueprints available for download.",
-    type: "success"
-  }
-];
+// Base API configuration URL
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/projects";
 
 export default function Page() {
   // ── State variables ────────────────────────────────────────────────────────
@@ -149,203 +35,208 @@ export default function Page() {
   const [backendStack, setBackendStack] = useState("FastAPI");
   const [databaseStack, setDatabaseStack] = useState("PostgreSQL");
 
-  // Simulation execution values
+  // Integration execution values
+  const [projectId, setProjectId] = useState<string | null>(null);
   const [phase, setPhase] = useState<ExecutionPhase>("PLANNING");
   const [progress, setProgress] = useState(0);
   const [activeAgent, setActiveAgent] = useState("CEO Agent");
   const [logs, setLogs] = useState<LogItem[]>([]);
-  const [simStepIndex, setSimStepIndex] = useState(0);
-  const [isSimulating, setIsSimulating] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   // File explorer values
   const [files, setFiles] = useState<FileArtifact[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileArtifact | null>(null);
 
   const logsEndRef = useRef<HTMLDivElement>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   // ── Auto-scroll logs ───────────────────────────────────────────────────────
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
 
-  // ── Generate dynamic mock blueprints based on user inputs ──────────────────
-  const populateBlueprints = (pName: string, idea: string, fe: string, be: string, db: string) => {
-    const prd = `# Product Requirements Document: ${pName}
+  // ── Close EventSource on unmount ───────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
+  }, []);
 
-## 1. Product Vision
-${idea}
-
-## 2. Technology Stack Parameters
-- **Frontend Framework:** ${fe}
-- **Backend Service:** ${be}
-- **Database Engine:** ${db}
-
-## 3. User Stories & Functional Specs
-- **US-101 (User Session):** As a registered user, I need to log in securely so that I can access my workspace.
-- **US-102 (Live Updates):** As a builder, I need real-time status feeds so I can trace operations live.
-`;
-
-    const arch = `# System Architecture: ${pName}
-
-## 1. Component Topology
-\`\`\`mermaid
-graph TD
-  Client[Web Client: ${fe}] --> Gateway[API Gateway: ${be}]
-  Gateway --> Service[Orchestration Engine]
-  Service --> Cache[(Redis Cache)]
-  Service --> DB[Database Store: ${db}]
-\`\`\`
-
-## 2. Design Rationale
-- Decoupled single-page UI architecture using ${fe} to optimize rendering speeds.
-- Asynchronous service routing managed via a ${be} engine to ensure low-latency request pipelines.
-`;
-
-    const api = `# OpenAPI Specification (YAML)
-openapi: 3.0.3
-info:
-  title: ${pName} API Services
-  version: 1.0.0
-paths:
-  /api/health:
-    get:
-      summary: Health Probe Endpoint
-      responses:
-        '200':
-          description: Healthy status payload.
-  /api/workspace/generate:
-    post:
-      summary: Launch multi-agent blueprint forge
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                idea:
-                  type: string
-`;
-
-    const sql = `-- Database Schema DDL: ${pName}
--- Generated for DB engine: ${db}
-
-CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email VARCHAR(255) UNIQUE NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS project_workspaces (
-  id UUID PRIMARY KEY,
-  owner_id UUID REFERENCES users(id),
-  project_name VARCHAR(100) NOT NULL,
-  status VARCHAR(20) NOT NULL,
-  specs JSONB
-);
-`;
-
-    const readme = `# ⚡ ${pName}
-
-Production-ready architecture blueprints and specifications generated by **DevForge AI**.
-
-## Recommended Stack
-- **Frontend:** ${fe}
-- **Backend:** ${be}
-- **Database:** ${db}
-
-## File Blueprint Structure
-- \`PRD.md\`: Product requirements, user flows, and MVP metrics.
-- \`architecture.md\`:mermaid architecture components topology.
-- \`api_spec.yaml\`: OpenAPI REST route specifications.
-- \`database_schema.sql\`: DB schema initialization DDL scripts.
-`;
-
-    const parsedFiles = [
-      { name: "README.md", content: readme, language: "markdown" },
-      { name: "PRD.md", content: prd, language: "markdown" },
-      { name: "architecture.md", content: arch, language: "markdown" },
-      { name: "api_spec.yaml", content: api, language: "yaml" },
-      { name: "database_schema.sql", content: sql, language: "sql" }
-    ];
-
-    setFiles(parsedFiles);
-    setSelectedFile(parsedFiles[0]);
+  // ── Fetch Artifacts upon completion ────────────────────────────────────────
+  const fetchArtifacts = async (projId: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/${projId}/artifacts`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch generated project files.");
+      }
+      const data = await res.json();
+      setFiles(data);
+      if (data.length > 0) {
+        setSelectedFile(data[0]);
+      }
+    } catch (err: any) {
+      console.error("Fetch artifacts error:", err);
+      setErrorMsg(err.message || "Could not load artifacts.");
+    }
   };
 
-  // ── Simulation Logic Loop ──────────────────────────────────────────────────
-  useEffect(() => {
-    if (!isSimulating) return;
-
-    if (simStepIndex >= MOCK_STEPS.length) {
-      setIsSimulating(false);
-      populateBlueprints(
-        projectName || "MyDevForgeApp",
-        userIdea || "An automated planning system.",
-        frontendStack,
-        backendStack,
-        databaseStack
-      );
-      return;
+  // ── Setup Real-time SSE Stream ─────────────────────────────────────────────
+  const connectSSE = (projId: string) => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
     }
 
-    const timer = setTimeout(() => {
-      const step = MOCK_STEPS[simStepIndex];
-      
-      // Update execution parameters
-      setPhase(step.phase as ExecutionPhase);
-      setProgress(step.progress);
-      setActiveAgent(step.agent);
-      
+    const eventSource = new EventSource(`${API_BASE}/${projId}/stream`);
+    eventSourceRef.current = eventSource;
+
+    eventSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        const { event: eventType, data } = payload;
+        
+        const now = new Date();
+        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        if (eventType === "connected") {
+          setLogs(prev => [
+            ...prev,
+            { time: timeString, agent: "System", dept: "Network", message: "SSE stream connection established.", type: "info" }
+          ]);
+        }
+        else if (eventType === "phase_started") {
+          const newPhase = data.phase as ExecutionPhase;
+          setPhase(newPhase);
+          
+          // Calculate phase-specific mock progress bar percentages
+          const progressMap: Record<string, number> = {
+            PLANNING: 20,
+            ARCHITECTURE: 45,
+            ENGINEERING: 65,
+            VALIDATION: 85,
+            REVIEW: 95,
+            COMPLETED: 100,
+            FAILED: 0
+          };
+          setProgress(progressMap[newPhase] || 0);
+
+          setLogs(prev => [
+            ...prev,
+            { time: timeString, agent: "Orchestrator", dept: "Management", message: `Transitioning to phase: ${newPhase}`, type: "info" }
+          ]);
+        }
+        else if (eventType === "agent_started") {
+          setActiveAgent(data.agent);
+          setLogs(prev => [
+            ...prev,
+            { time: timeString, agent: data.agent, dept: data.dept, message: `Started execution task.`, type: "info" }
+          ]);
+        }
+        else if (eventType === "agent_completed") {
+          setLogs(prev => [
+            ...prev,
+            { time: timeString, agent: data.agent, dept: "Validation", message: `Completed task successfully.`, type: "success" }
+          ]);
+        }
+        else if (eventType === "agent_failed") {
+          setLogs(prev => [
+            ...prev,
+            { time: timeString, agent: data.agent, dept: "Validation", message: `Task execution failed: ${data.error}`, type: "error" }
+          ]);
+        }
+        else if (eventType === "revision_triggered") {
+          setLogs(prev => [
+            ...prev,
+            { time: timeString, agent: "Director", dept: "Review", message: `Rejected blueprint. Triggering loop: ${data.revision}. Feedback: ${JSON.stringify(data.feedback)}`, type: "warning" }
+          ]);
+        }
+        else if (eventType === "pipeline_completed") {
+          setPhase("COMPLETED");
+          setProgress(105);
+          setProgress(100);
+          setLogs(prev => [
+            ...prev,
+            { time: timeString, agent: "CEO Agent", dept: "Management", message: "Orchestration pipeline completed successfully!", type: "success" }
+          ]);
+          eventSource.close();
+          fetchArtifacts(projId);
+        }
+        else if (eventType === "pipeline_failed") {
+          setPhase("FAILED");
+          setLogs(prev => [
+            ...prev,
+            { time: timeString, agent: "CEO Agent", dept: "Management", message: `Pipeline aborted: ${data.error}`, type: "error" }
+          ]);
+          setErrorMsg(data.error || "Generation pipeline failed.");
+          eventSource.close();
+        }
+      } catch (err) {
+        console.error("SSE parse error:", err);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.error("SSE Connection error:", err);
       const now = new Date();
       const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
       setLogs(prev => [
         ...prev,
-        {
-          time: timeString,
-          agent: step.agent,
-          dept: step.dept,
-          message: step.message,
-          type: step.type as any
-        }
+        { time: timeString, agent: "System", dept: "Network", message: "Disconnected from server log stream. Retrying connection...", type: "warning" }
       ]);
-
-      setSimStepIndex(prev => prev + 1);
-    }, 1800);
-
-    return () => clearTimeout(timer);
-  }, [isSimulating, simStepIndex]);
+      eventSource.close();
+    };
+  };
 
   // ── Event Handlers ─────────────────────────────────────────────────────────
 
-  const handleStartForge = (e: React.FormEvent) => {
+  const handleStartForge = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!projectName.trim() || !userIdea.trim()) return;
 
-    setView("workspace");
-    setIsSimulating(true);
-    setProgress(0);
-    setSimStepIndex(0);
+    setLoading(true);
+    setErrorMsg(null);
     setLogs([]);
-    setPhase("PLANNING");
     setFiles([]);
     setSelectedFile(null);
+
+    try {
+      const response = await fetch(`${API_BASE}/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_name: projectName,
+          user_idea: userIdea,
+          frontend_stack: frontendStack,
+          backend_stack: backendStack,
+          database_stack: databaseStack
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to start project generation. Make sure backend is running.");
+      }
+
+      const result = await response.json();
+      setProjectId(result.project_id);
+      setView("workspace");
+      
+      // Connect real-time log event stream
+      connectSSE(result.project_id);
+
+    } catch (err: any) {
+      console.error("Generate submit error:", err);
+      setErrorMsg(err.message || "Could not connect to the backend server.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const downloadBlueprint = () => {
-    // Generate simple blob contents for the README/PRD
-    const readmeFile = files.find(f => f.name === "README.md");
-    if (!readmeFile) return;
-    
-    const blob = new Blob([readmeFile.content], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${projectName.toLowerCase().replace(/\s+/g, "-")}-blueprint.zip`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if (!projectId) return;
+    // Redirect browser directly to FastAPI download endpoint to prompt ZIP download
+    window.location.href = `${API_BASE}/${projectId}/download`;
   };
 
   return (
@@ -377,13 +268,20 @@ Production-ready architecture blueprints and specifications generated by **DevFo
         </nav>
       </header>
 
+      {/* ── ERROR TOAST ─────────────────────────────────────────────────────── */}
+      {errorMsg && (
+        <div className="bg-red-500/15 border-b border-red-500/30 text-red-400 text-xs px-6 py-3 font-semibold flex items-center justify-between">
+          <span>⚠️ {errorMsg}</span>
+          <button onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-red-200">Dismiss</button>
+        </div>
+      )}
+
       {/* ── MAIN CONTENT ────────────────────────────────────────────────────── */}
       <main className="flex-1 flex flex-col">
         
         {/* ── VIEW 1: LANDING PAGE ─────────────────────────────────────────── */}
         {view === "landing" && (
           <section className="flex-1 flex flex-col justify-center items-center px-6 py-20 relative overflow-hidden">
-            {/* Background glowing effects */}
             <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-indigo-600/10 blur-[120px] pointer-events-none" />
             <div className="absolute bottom-10 left-10 w-72 h-72 rounded-full bg-emerald-500/5 blur-[100px] pointer-events-none" />
 
@@ -409,17 +307,6 @@ Production-ready architecture blueprints and specifications generated by **DevFo
                   className="px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-lg text-white transition-all shadow-lg glow-indigo flex items-center justify-center gap-2"
                 >
                   Get Started
-                </button>
-                <button
-                  onClick={() => {
-                    setProjectName("Demo Planner");
-                    setUserIdea("An offline planning dashboard utilizing local storages.");
-                    setView("workspace");
-                    setIsSimulating(true);
-                  }}
-                  className="px-8 py-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 font-bold text-lg text-zinc-300 transition-all flex items-center justify-center gap-2"
-                >
-                  Live Run Demo
                 </button>
               </div>
             </div>
@@ -546,9 +433,18 @@ Production-ready architecture blueprints and specifications generated by **DevFo
 
                 <button
                   type="submit"
-                  className="w-full mt-4 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-lg text-white transition-all shadow-lg glow-indigo"
+                  disabled={loading}
+                  className="w-full mt-4 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-lg text-white transition-all shadow-lg glow-indigo disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Launch Forge Workspace
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Initializing Workspace...
+                    </>
+                  ) : "Launch Forge Workspace"}
                 </button>
               </form>
             </div>
@@ -570,22 +466,26 @@ Production-ready architecture blueprints and specifications generated by **DevFo
                       Project Generation
                     </span>
                     <h2 className="text-2xl font-extrabold text-white">
-                      {projectName || "DevForge Dashboard"}
+                      {projectName}
                     </h2>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide border ${
-                    progress === 100 
+                    phase === "COMPLETED" 
                       ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                      : "bg-indigo-500/10 border-indigo-500/30 text-indigo-400 animate-pulse-slow"
+                      : phase === "FAILED"
+                        ? "bg-red-500/10 border-red-500/30 text-red-400"
+                        : "bg-indigo-500/10 border-indigo-500/30 text-indigo-400 animate-pulse-slow"
                   }`}>
-                    {progress === 100 ? "Completed" : "Active Forge"}
+                    {phase === "COMPLETED" ? "Completed" : phase === "FAILED" ? "Failed" : "Active Forge"}
                   </span>
                 </div>
 
                 {/* Progress bar */}
                 <div className="w-full bg-zinc-950 rounded-full h-2 mb-2 overflow-hidden border border-zinc-800">
                   <div 
-                    className="bg-gradient-to-r from-indigo-500 to-violet-600 h-full transition-all duration-500 ease-out"
+                    className={`h-full transition-all duration-500 ease-out ${
+                      phase === "FAILED" ? "bg-red-500" : "bg-gradient-to-r from-indigo-500 to-violet-600"
+                    }`}
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -609,7 +509,11 @@ Production-ready architecture blueprints and specifications generated by **DevFo
                     { key: "VALIDATION", label: "Validation Department", agents: "Security, QA, Platform Engineers" },
                     { key: "REVIEW", label: "Review Department", agents: "Engineering Director" }
                   ].map((p, idx) => {
-                    const isPassed = MOCK_STEPS.findIndex(s => s.phase === p.key) < simStepIndex;
+                    const phaseKeys = ["PLANNING", "ARCHITECTURE", "ENGINEERING", "VALIDATION", "REVIEW", "COMPLETED"];
+                    const currentIdx = phaseKeys.indexOf(phase);
+                    const configIdx = phaseKeys.indexOf(p.key);
+                    
+                    const isPassed = currentIdx > configIdx;
                     const isActive = phase === p.key;
                     
                     return (
@@ -661,7 +565,7 @@ Production-ready architecture blueprints and specifications generated by **DevFo
                   </div>
                   <div>
                     <h4 className="text-lg font-bold text-white">{activeAgent}</h4>
-                    <p className="text-xs text-zinc-500">Status: {progress === 100 ? "IDLE" : "RUNNING"}</p>
+                    <p className="text-xs text-zinc-500">Status: {phase === "COMPLETED" ? "IDLE" : "RUNNING"}</p>
                   </div>
                 </div>
               </div>
@@ -675,7 +579,9 @@ Production-ready architecture blueprints and specifications generated by **DevFo
               <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/30 glass-panel h-80 flex flex-col">
                 <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wide mb-3 flex items-center justify-between">
                   <span>Orchestrator SSE Log Stream</span>
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className={`h-2 w-2 rounded-full ${
+                    phase === "COMPLETED" ? "bg-emerald-500" : phase === "FAILED" ? "bg-red-500" : "bg-indigo-500 animate-pulse"
+                  }`} />
                 </h3>
                 
                 <div className="flex-1 overflow-y-auto bg-zinc-950/80 rounded-lg p-4 border border-zinc-800 font-mono text-xs flex flex-col gap-3">
@@ -684,12 +590,12 @@ Production-ready architecture blueprints and specifications generated by **DevFo
                       <span className="text-zinc-500 select-none">{log.time}</span>
                       <span className="text-indigo-400 font-semibold select-none">[{log.agent}]:</span>
                       <span className={`${
-                        log.type === "success" ? "text-emerald-400" : log.type === "warning" ? "text-yellow-400" : "text-zinc-300"
+                        log.type === "success" ? "text-emerald-400" : log.type === "warning" ? "text-yellow-400" : log.type === "error" ? "text-red-400" : "text-zinc-300"
                       }`}>{log.message}</span>
                     </div>
                   ))}
                   {logs.length === 0 && (
-                    <div className="text-zinc-600 italic">Awaiting pipeline trigger signal...</div>
+                    <div className="text-zinc-600 italic">Connecting to background worker event queue...</div>
                   )}
                   <div ref={logsEndRef} />
                 </div>
@@ -701,7 +607,7 @@ Production-ready architecture blueprints and specifications generated by **DevFo
                   <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wide">
                     Generated Blueprint Explorer
                   </h3>
-                  {progress === 100 && (
+                  {phase === "COMPLETED" && (
                     <button
                       onClick={downloadBlueprint}
                       className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 font-bold text-xs text-white rounded-lg transition-all shadow-md glow-indigo flex items-center gap-1.5"
@@ -711,10 +617,12 @@ Production-ready architecture blueprints and specifications generated by **DevFo
                   )}
                 </div>
 
-                {progress < 100 ? (
+                {phase !== "COMPLETED" ? (
                   <div className="flex-1 flex flex-col items-center justify-center gap-3 text-zinc-500">
                     <span className="text-4xl animate-pulse-slow">📦</span>
-                    <p className="text-sm font-medium">Artifact package generating...</p>
+                    <p className="text-sm font-medium">
+                      {phase === "FAILED" ? "Generation aborted due to validation fail." : "Artifact package generating..."}
+                    </p>
                   </div>
                 ) : (
                   <div className="flex-1 flex flex-col gap-4">
