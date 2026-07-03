@@ -144,14 +144,21 @@ class BaseAgent(ABC):
                     message=f"Started execution (attempt {attempt})."
                 )
 
-                # 2. Execute
-                output_data = await self.execute(context_manager)
-
-                # 3. Validate
-                await self.validate(output_data, context_manager)
+                # Acquire write lock
+                await context_manager.acquire_lock(self.name)
                 
-                # 4. Complete
-                response = await self.complete(output_data, context_manager)
+                try:
+                    # 2. Execute
+                    output_data = await self.execute(context_manager)
+
+                    # 3. Validate
+                    await self.validate(output_data, context_manager)
+                    
+                    # 4. Complete
+                    response = await self.complete(output_data, context_manager)
+                finally:
+                    # Always release write lock
+                    context_manager.release_lock(self.name)
                 
                 await context_manager.log_agent_action(
                     agent_name=self.name,
