@@ -22,12 +22,8 @@ from agents.planning import ProductLeadAgent, MarketAnalystAgent, DesignLeadAgen
 from agents.architecture import PrincipalArchitectAgent
 from agents.engineering import BackendLeadAgent, FrontendLeadAgent
 from agents.validation import SecurityLeadAgent, QALeadAgent, PlatformEngineerAgent
+from agents.review import EngineeringDirectorAgent
 from generator.pipeline import ArtifactGenerator
-
-# Downstream mocks to complete the pipeline
-from agents.mock_agents import (
-    MockEngineeringDirector
-)
 
 
 def log_event(event_payload: dict) -> None:
@@ -112,7 +108,7 @@ async def main():
     orchestrator.register_agent("Security Lead", SecurityLeadAgent(llm_adapter=adapter))
     orchestrator.register_agent("QA Lead", QALeadAgent(llm_adapter=adapter))
     orchestrator.register_agent("Platform Engineer", PlatformEngineerAgent(llm_adapter=adapter))
-    orchestrator.register_agent("Engineering Director", MockEngineeringDirector())
+    orchestrator.register_agent("Engineering Director", EngineeringDirectorAgent(llm_adapter=adapter))
 
     # 5. Bootstrapping: CEO Agent runs first to refine details
     print("[CEO Agent] Running initial alignment and bootstrapping...")

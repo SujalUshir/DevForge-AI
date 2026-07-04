@@ -244,10 +244,10 @@ class LLMAdapter:
     def _get_mock_primitive(self, t: Type) -> Any:
         if issubclass(t, str):
             return "Mock Generated structured output string placeholder"
+        elif issubclass(t, bool):
+            return True
         elif issubclass(t, int):
             return 100
         elif issubclass(t, float):
             return 99.9
-        elif issubclass(t, bool):
-            return True
         return None

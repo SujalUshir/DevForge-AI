@@ -135,6 +135,19 @@ class ReviewContext(BaseModel):
     approved: bool = Field(default=False, description="Approval gate status checked by Engineering Director")
     reviewer_feedback: List[str] = Field(default_factory=list, description="Revision feedback items listed by Engineering Director")
 
+    # Engineering Director new fields
+    overall_score: float = Field(default=0.0, description="Overall technical review quality score between 0.0 and 10.0.")
+    critical_issues: List[str] = Field(default_factory=list, description="List of blocking errors.")
+    major_issues: List[str] = Field(default_factory=list, description="List of important recommendations.")
+    minor_issues: List[str] = Field(default_factory=list, description="List of small fixes.")
+    missing_sections: List[str] = Field(default_factory=list, description="List of required specs left empty.")
+    architecture_review: str = Field(default="", description="Review comments focusing on system topology.")
+    engineering_review: str = Field(default="", description="Review comments focusing on database SQL and API layout.")
+    security_review: str = Field(default="", description="Review comments focusing on auth and threat models.")
+    quality_review: str = Field(default="", description="Review comments focusing on testing plans.")
+    final_recommendations: str = Field(default="", description="Actionable correction directives.")
+    approval_summary: str = Field(default="", description="Summary explaining the final gate status decision.")
+
 
 class TimelineLogItem(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Log entry timestamp")

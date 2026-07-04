@@ -3,4 +3,5 @@ from shared_schemas.planning import ProductLeadResponse, MarketAnalystResponse, 
 from shared_schemas.architecture import PrincipalArchitectResponse
 from shared_schemas.engineering import BackendLeadResponse, FrontendLeadResponse
 from shared_schemas.validation import SecurityLeadResponse, QALeadResponse, PlatformEngineerResponse
+from shared_schemas.review import EngineeringDirectorResponse
 
