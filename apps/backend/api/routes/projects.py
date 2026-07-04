@@ -123,7 +123,7 @@ async def run_pipeline_worker(project_id: str, context_manager: ContextManager):
             final_context = context_manager.get_context_copy()
             workspace_dir = settings.output_dir / project_id
             generator = ArtifactGenerator(context=final_context, output_dir=workspace_dir)
-            generator.generate_package()
+            await generator.generate_package()
             
             logger.info("background_worker_success", project_id=project_id)
         else:

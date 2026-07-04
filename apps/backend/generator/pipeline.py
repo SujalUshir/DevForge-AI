@@ -11,6 +11,7 @@ from typing import List
 import structlog
 
 from context.schema import SharedProjectContext
+from mcp.filesystem import FilesystemMCPClient
 
 logger = structlog.get_logger(__name__)
 
@@ -24,68 +25,68 @@ class ArtifactGenerator:
         self.context = context
         self.output_dir = output_dir.resolve()
 
-    def generate_package(self) -> List[Path]:
+    async def generate_package(self) -> List[Path]:
         """
-        Processes and writes all project blueprint artifacts to disk.
+        Processes and writes all project blueprint artifacts to disk via FilesystemMCPClient.
         Returns a list of created file paths.
         """
-        # Ensure target workspace exists
-        self.output_dir.mkdir(parents=True, exist_ok=True)
         logger.info("artifact_generator_start", output_dir=str(self.output_dir))
+
+        # Instantiate FilesystemMCPClient targeting the output directory as workspace root
+        mcp_client = FilesystemMCPClient(workspace_root=self.output_dir, read_only=False)
+        await mcp_client.connect()
 
         generated_paths = []
 
-        # ── 1. PRD.md ────────────────────────────────────────────────────────
-        prd_content = self.context.planning.prd_markdown
-        if not prd_content:
-            prd_content = (
-                f"# Product Requirements Document (PRD) - {self.context.metadata.project_name}\n\n"
-                f"Project Vision: {self.context.metadata.project_vision}\n"
+        try:
+            # ── 1. PRD.md ────────────────────────────────────────────────────────
+            prd_content = self.context.planning.prd_markdown
+            if not prd_content:
+                prd_content = (
+                    f"# Product Requirements Document (PRD) - {self.context.metadata.project_name}\n\n"
+                    f"Project Vision: {self.context.metadata.project_vision}\n"
+                )
+            await mcp_client.write_file("PRD.md", prd_content)
+            logger.debug("artifact_file_written", path=str(self.output_dir / "PRD.md"))
+            generated_paths.append(self.output_dir / "PRD.md")
+
+            # ── 2. architecture.md ───────────────────────────────────────────────
+            arch_content = (
+                f"# Architecture Document - {self.context.metadata.project_name}\n\n"
+                f"## System Topology Diagram\n"
+                f"{self.context.architecture.topology_markdown}\n\n"
+                f"## Design Rationale\n"
+                f"{self.context.architecture.design_rationale}\n"
             )
-        prd_path = self.output_dir / "PRD.md"
-        self._write_file(prd_path, prd_content)
-        generated_paths.append(prd_path)
+            await mcp_client.write_file("architecture.md", arch_content)
+            logger.debug("artifact_file_written", path=str(self.output_dir / "architecture.md"))
+            generated_paths.append(self.output_dir / "architecture.md")
 
-        # ── 2. architecture.md ───────────────────────────────────────────────
-        arch_content = (
-            f"# Architecture Document - {self.context.metadata.project_name}\n\n"
-            f"## System Topology Diagram\n"
-            f"{self.context.architecture.topology_markdown}\n\n"
-            f"## Design Rationale\n"
-            f"{self.context.architecture.design_rationale}\n"
-        )
-        arch_path = self.output_dir / "architecture.md"
-        self._write_file(arch_path, arch_content)
-        generated_paths.append(arch_path)
+            # ── 3. api_spec.yaml ─────────────────────────────────────────────────
+            api_content = self.context.engineering.api_spec_yaml
+            if api_content:
+                await mcp_client.write_file("api_spec.yaml", api_content)
+                logger.debug("artifact_file_written", path=str(self.output_dir / "api_spec.yaml"))
+                generated_paths.append(self.output_dir / "api_spec.yaml")
 
-        # ── 3. api_spec.yaml ─────────────────────────────────────────────────
-        api_content = self.context.engineering.api_spec_yaml
-        if api_content:
-            api_path = self.output_dir / "api_spec.yaml"
-            self._write_file(api_path, api_content)
-            generated_paths.append(api_path)
+            # ── 4. database_schema.sql ───────────────────────────────────────────
+            db_content = self.context.engineering.database_schema_sql
+            if db_content:
+                await mcp_client.write_file("database_schema.sql", db_content)
+                logger.debug("artifact_file_written", path=str(self.output_dir / "database_schema.sql"))
+                generated_paths.append(self.output_dir / "database_schema.sql")
 
-        # ── 4. database_schema.sql ───────────────────────────────────────────
-        db_content = self.context.engineering.database_schema_sql
-        if db_content:
-            db_path = self.output_dir / "database_schema.sql"
-            self._write_file(db_path, db_content)
-            generated_paths.append(db_path)
+            # ── 5. README.md ─────────────────────────────────────────────────────
+            readme_content = self._build_readme_content()
+            await mcp_client.write_file("README.md", readme_content)
+            logger.debug("artifact_file_written", path=str(self.output_dir / "README.md"))
+            generated_paths.append(self.output_dir / "README.md")
 
-        # ── 5. README.md ─────────────────────────────────────────────────────
-        readme_content = self._build_readme_content()
-        readme_path = self.output_dir / "README.md"
-        self._write_file(readme_path, readme_content)
-        generated_paths.append(readme_path)
+        finally:
+            await mcp_client.disconnect()
 
         logger.info("artifact_generator_completed", files_written=len(generated_paths))
         return generated_paths
-
-    def _write_file(self, file_path: Path, content: str) -> None:
-        """Helper to write content text to a file path."""
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(content)
-        logger.debug("artifact_file_written", path=str(file_path))
 
     def _build_readme_content(self) -> str:
         """Helper to dynamically format the project README."""

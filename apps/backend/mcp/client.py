@@ -154,13 +154,15 @@ class GenericMCPClient:
         if not self.is_connected():
             raise MCPConnectionError("MCP client is not connected.")
 
-        # Exclude sensitive arguments from logging
+        # Exclude sensitive arguments from logging and truncate long string values
         safe_args = {}
         if arguments:
             sensitive_keys = {"token", "password", "secret", "key", "auth"}
             for k, v in arguments.items():
                 if any(sk in k.lower() for sk in sensitive_keys):
                     safe_args[k] = "[REDACTED]"
+                elif isinstance(v, str) and len(v) > 200:
+                    safe_args[k] = v[:200] + f"... [truncated {len(v) - 200} chars]"
                 else:
                     safe_args[k] = v
 

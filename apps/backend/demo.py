@@ -133,7 +133,7 @@ async def main():
     print("\n[Artifact Scaffolder] Writing generated engineering blueprints to output folder...")
     final_context = ctx_manager.get_context_copy()
     generator = ArtifactGenerator(context=final_context, output_dir=output_dir)
-    written_files = generator.generate_package()
+    written_files = await generator.generate_package()
 
     print("\n" + "=" * 50)
     print(f"Blueprinted workspace: {output_dir}")
