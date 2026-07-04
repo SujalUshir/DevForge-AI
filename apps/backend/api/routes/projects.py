@@ -31,9 +31,8 @@ from agents.llm_adapter import LLMAdapter
 from agents.ceo import CEOAgent
 from agents.planning import ProductLeadAgent, MarketAnalystAgent, DesignLeadAgent
 from agents.architecture import PrincipalArchitectAgent
+from agents.engineering import BackendLeadAgent, FrontendLeadAgent
 from agents.mock_agents import (
-    MockBackendLead,
-    MockFrontendLead,
     MockSecurityLead,
     MockQALead,
     MockPlatformEngineer,
@@ -100,10 +99,10 @@ async def run_pipeline_worker(project_id: str, context_manager: ContextManager):
     orchestrator.register_agent("Market Analyst", MarketAnalystAgent(llm_adapter=adapter))
     orchestrator.register_agent("Design Lead", DesignLeadAgent(llm_adapter=adapter))
     orchestrator.register_agent("Principal Architect", PrincipalArchitectAgent(llm_adapter=adapter))
+    orchestrator.register_agent("Backend Lead", BackendLeadAgent(llm_adapter=adapter))
+    orchestrator.register_agent("Frontend Lead", FrontendLeadAgent(llm_adapter=adapter))
 
     # 3. Register mock downstreams
-    orchestrator.register_agent("Backend Lead", MockBackendLead())
-    orchestrator.register_agent("Frontend Lead", MockFrontendLead())
     orchestrator.register_agent("Security Lead", MockSecurityLead())
     orchestrator.register_agent("QA Lead", MockQALead())
     orchestrator.register_agent("Platform Engineer", MockPlatformEngineer())
