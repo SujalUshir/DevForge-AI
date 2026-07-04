@@ -81,4 +81,32 @@ class CEOAgent(BaseAgent):
             meta.tech_stack.database = structured_response.suggested_database_stack
 
         await context_manager.update_metadata(self.name, update_metadata_slice)
+
+        # ── Proof of Work: CEO Agent writes README.md via Filesystem MCP client ──
+        try:
+            logger.info("ceo_agent_mcp_readme_start")
+            from mcp.filesystem import FilesystemMCPClient
+            
+            workspace_dir = None
+            if hasattr(context_manager, "_persist_path") and context_manager._persist_path:
+                workspace_dir = context_manager._persist_path.parent
+            
+            mcp_client = FilesystemMCPClient(workspace_root=workspace_dir, read_only=False)
+            await mcp_client.connect()
+            try:
+                readme_content = (
+                    f"# {structured_response.refined_project_name}\n\n"
+                    f"## Vision\n{structured_response.project_vision}\n\n"
+                    f"## Tech Stack\n"
+                    f"- Frontend: {structured_response.suggested_frontend_stack}\n"
+                    f"- Backend: {structured_response.suggested_backend_stack}\n"
+                    f"- Database: {structured_response.suggested_database_stack}\n"
+                )
+                await mcp_client.write_file("README.md", readme_content)
+                logger.info("ceo_agent_mcp_readme_success", path="README.md")
+            finally:
+                await mcp_client.disconnect()
+        except Exception as exc:
+            logger.error("ceo_agent_mcp_readme_failed", error=str(exc))
+
         return structured_response.model_dump()

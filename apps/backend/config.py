@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     # Relative to apps/backend/ during local development.
     output_dir: Path = Path("./workspace")
 
+    # ── Model Context Protocol (MCP) ──────────────────────────────
+    mcp_node_command: str = "npx"
+    filesystem_mcp_package: str = "@modelcontextprotocol/server-filesystem"
+
     # ── Google AI ─────────────────────────────────────────────────
     # Required from Milestone 4 onward.
     gemini_api_key: str = ""
