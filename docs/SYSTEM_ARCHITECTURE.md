@@ -636,8 +636,8 @@ The backend implements structured JSON logging to support the Next.js UI timelin
 * **Parallel Execution:** Frontend and backend leads generate specifications in parallel during Phase 3, reducing build times.
 * **Context Caching:** Utilizing Gemini system prompt caching to save tokens during long iterative agent chats.
 * **Model Selection:**
-  * Gemini 1.5 Flash: Used for fast reviews, SW SWOT analyses, and schema checking.
-  * Gemini 1.5 Pro: Used for writing the actual PRD, architecture topology, and code skeletons.
+  * Gemini 2.5 Flash / Gemini 2.0 Flash: Used for fast reviews, SWOT analyses, schema checking, and structured outputs.
+  * Gemini 2.5 Pro / Gemini 2.0 Pro: Used for writing the actual PRD, architecture topology, and code skeletons.
 
 ---
 
