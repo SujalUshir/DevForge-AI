@@ -17,7 +17,7 @@ This document records the exact runtime and structural state of the DevForge AI 
 | **Filesystem MCP** | Yes | Yes | No | No | Yes | Secure filesystem client in `apps/backend/mcp/filesystem.py` communicating with `@modelcontextprotocol/server-filesystem` node server via stdio. |
 | **Planning Department** | Yes | Yes | No | No | Yes | Real ADK agents (`ProductLeadAgent`, `MarketAnalystAgent`, `DesignLeadAgent`) using prompt files. |
 | **Architecture Department** | Yes | Yes | No | No | Yes | Real ADK agent (`PrincipalArchitectAgent`) executing topology designs. |
-| **Engineering Department** | Yes | Yes | No | No | Yes | Real ADK agents (`BackendLeadAgent`, `FrontendLeadAgent`) generating source boilderplates. |
+| **Engineering Department** | Yes | Yes | No | No | Yes | Real ADK agents (`BackendLeadAgent`, `FrontendLeadAgent`) generating source boilerplates. |
 | **Validation Department** | Yes | Yes | No | No | Yes | Real ADK agents (`SecurityLeadAgent`, `QALeadAgent`, `PlatformEngineerAgent`) checking compliance. |
 | **Engineering Director** | Yes | Yes | No | No | Yes | Real ADK review agent (`EngineeringDirectorAgent`) evaluating all slices and enforcing approval gates. |
 | **Artifact Generator** | Yes | Yes | No | No | Yes | Scaffold generator in `apps/backend/generator/pipeline.py` writing blueprints via `FilesystemMCPClient`. |
