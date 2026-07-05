@@ -1,2 +1,9 @@
-# Review department agents: Engineering Director.
-# Implemented in Milestone 11.
+"""
+Review department agents package.
+"""
+
+from .engineering_director import EngineeringDirectorAgent
+
+__all__ = [
+    "EngineeringDirectorAgent",
+]

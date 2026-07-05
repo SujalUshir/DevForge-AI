@@ -20,17 +20,10 @@ from agents.llm_adapter import LLMAdapter
 from agents.ceo import CEOAgent
 from agents.planning import ProductLeadAgent, MarketAnalystAgent, DesignLeadAgent
 from agents.architecture import PrincipalArchitectAgent
+from agents.engineering import BackendLeadAgent, FrontendLeadAgent
+from agents.validation import SecurityLeadAgent, QALeadAgent, PlatformEngineerAgent
+from agents.review import EngineeringDirectorAgent
 from generator.pipeline import ArtifactGenerator
-
-# Downstream mocks to complete the pipeline
-from agents.mock_agents import (
-    MockBackendLead,
-    MockFrontendLead,
-    MockSecurityLead,
-    MockQALead,
-    MockPlatformEngineer,
-    MockEngineeringDirector
-)
 
 
 def log_event(event_payload: dict) -> None:
@@ -109,13 +102,13 @@ async def main():
     orchestrator.register_agent("Design Lead", DesignLeadAgent(llm_adapter=adapter))
     orchestrator.register_agent("Principal Architect", PrincipalArchitectAgent(llm_adapter=adapter))
 
-    # Register downstream mock agents
-    orchestrator.register_agent("Backend Lead", MockBackendLead())
-    orchestrator.register_agent("Frontend Lead", MockFrontendLead())
-    orchestrator.register_agent("Security Lead", MockSecurityLead())
-    orchestrator.register_agent("QA Lead", MockQALead())
-    orchestrator.register_agent("Platform Engineer", MockPlatformEngineer())
-    orchestrator.register_agent("Engineering Director", MockEngineeringDirector())
+    orchestrator.register_agent("Backend Lead", BackendLeadAgent(llm_adapter=adapter))
+    orchestrator.register_agent("Frontend Lead", FrontendLeadAgent(llm_adapter=adapter))
+
+    orchestrator.register_agent("Security Lead", SecurityLeadAgent(llm_adapter=adapter))
+    orchestrator.register_agent("QA Lead", QALeadAgent(llm_adapter=adapter))
+    orchestrator.register_agent("Platform Engineer", PlatformEngineerAgent(llm_adapter=adapter))
+    orchestrator.register_agent("Engineering Director", EngineeringDirectorAgent(llm_adapter=adapter))
 
     # 5. Bootstrapping: CEO Agent runs first to refine details
     print("[CEO Agent] Running initial alignment and bootstrapping...")
@@ -133,7 +126,7 @@ async def main():
     print("\n[Artifact Scaffolder] Writing generated engineering blueprints to output folder...")
     final_context = ctx_manager.get_context_copy()
     generator = ArtifactGenerator(context=final_context, output_dir=output_dir)
-    written_files = generator.generate_package()
+    written_files = await generator.generate_package()
 
     print("\n" + "=" * 50)
     print(f"Blueprinted workspace: {output_dir}")
