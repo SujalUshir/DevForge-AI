@@ -356,7 +356,7 @@ The Shared Project Context is the central document updated during project genera
 ### 6.2 Synchronization & Ownership
 * **Single Writer Principle:** Only one agent is granted "Write Lock" access to the Shared Project Context at a time. The System Orchestrator acts as the lock manager.
 * **Atomic Transitions:** Phase transitions occur only after the current active department completes its execution steps and passes schema validation.
-* **Concurrency:** In V1, parallel agents (e.g., Backend Lead and Frontend Lead in Phase 3) write to isolated key structures (`api_spec_yaml` and `frontend_routes_structure`) in memory. The Orchestrator merges these entries back into the main Context JSON atomically upon phase completion.
+* **Concurrency:** In V1, parallel agents (e.g., Backend Lead and Frontend Lead in Phase 3) write to isolated key structures (`api_spec_yaml` and `routing` / `frontend_pages` / `components`) in memory. The Orchestrator merges these entries back into the main Context JSON atomically upon phase completion.
 
 ---
 

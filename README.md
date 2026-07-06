@@ -120,7 +120,7 @@ DevForge AI organizes its workforce into five distinct departments, overseen by 
 | **Planning** | **Design Lead** | UX layout & wireframe specifications | Metadata | `ux_layout_specs` |
 | **Architecture** | **Principal Architect** | System topology & architectural design | Planning outputs | `topology_markdown`, `design_rationale` |
 | **Engineering** | **Backend Lead** | Database DDL & API OpenAPI schemas | Architecture outputs | `api_spec_yaml`, `database_schema_sql` |
-| **Engineering** | **Frontend Lead** | UI router skeletons & component design | Architecture outputs | `frontend_routes_structure` |
+| **Engineering** | **Frontend Lead** | UI router skeletons & component design | Architecture outputs | `routing`, `frontend_pages`, `components`, `layout` |
 | **Validation** | **Security Lead** | Threat modeling & validation checks | Code artifacts | `security_report_markdown` |
 | **Validation** | **QA Lead** | Integration and unit testing scenarios | Code artifacts | `test_plan_markdown` |
 | **Validation** | **Platform Engineer** | Dockerfiles & CI/CD workflows | Code artifacts | `dockerfile`, `docker_compose_yml` |
