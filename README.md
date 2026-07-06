@@ -4,7 +4,7 @@
   <p>
     <img src="https://img.shields.io/badge/Python-3.11+-blue?logo=python&logoColor=white" alt="Python">
     <img src="https://img.shields.io/badge/FastAPI-0.139+-green?logo=fastapi&logoColor=white" alt="FastAPI">
-    <img src="https://img.shields.io/badge/Next.js-14+-black?logo=next.js&logoColor=white" alt="Next.js">
+    <img src="https://img.shields.io/badge/Next.js-15+-black?logo=next.js&logoColor=white" alt="Next.js">
     <img src="https://img.shields.io/badge/Google_ADK-v2.3.0-orange?logo=google&logoColor=white" alt="Google ADK">
     <img src="https://img.shields.io/badge/Model_Context_Protocol-v1.28-purple?logo=databricks&logoColor=white" alt="MCP">
     <img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT License">
@@ -120,14 +120,21 @@ DevForge AI organizes its workforce into five distinct departments, overseen by 
 | **Planning** | **Design Lead** | UX layout & wireframe specifications | Metadata | `ux_layout_specs` |
 | **Architecture** | **Principal Architect** | System topology & architectural design | Planning outputs | `topology_markdown`, `design_rationale` |
 | **Engineering** | **Backend Lead** | Database DDL & API OpenAPI schemas | Architecture outputs | `api_spec_yaml`, `database_schema_sql` |
-| **Engineering** | **Frontend Lead** | UI router skeletons & component design | Architecture outputs | `frontend_routes_structure` |
+| **Engineering** | **Frontend Lead** | UI router skeletons & component design | Architecture outputs | `routing`, `frontend_pages`, `components`, `layout` |
 | **Validation** | **Security Lead** | Threat modeling & validation checks | Code artifacts | `security_report_markdown` |
 | **Validation** | **QA Lead** | Integration and unit testing scenarios | Code artifacts | `test_plan_markdown` |
 | **Validation** | **Platform Engineer** | Dockerfiles & CI/CD workflows | Code artifacts | `dockerfile`, `docker_compose_yml` |
 | **Review** | **Engineering Director**| Final sign-off & quality gate approval | Full Context | `approved`, `reviewer_feedback` |
 
 ### Revision Loops & Quality Gates
-If the **Engineering Director** rejects the generated blueprints (e.g., security flaws or database schema mismatches), the orchestrator transitions back to the **Engineering** phase with detailed feedback. This revision loop is capped at a maximum of 2 attempts to ensure execution bounds.
+If the **Engineering Director** detects issues in the generated blueprints, a revision loop is triggered. To prevent infinite regeneration:
+- **Capped Loop**: The review process is capped at a maximum of 2 iterations.
+- **Strict Scope**: The reviewer evaluates strictly against the original PRD, the generated architecture, and the generated artifacts, without introducing new requirements each iteration.
+- **Issue Classification**:
+  - *Blocking (Fails Review)*: Missing required PRD features, broken/inconsistent artifacts, and invalid schemas.
+  - *Recommendations (No Failure)*: Kubernetes configurations, API Gateway setups, rate limiting, secret management, performance optimizations, etc., unless explicitly required by the PRD.
+- **Final Iteration Auto-Approval**: After the second review, the blueprint is accepted, and any remaining non-critical issues are reported inside the Recommendations section instead of triggering another regeneration.
+
 
 ---
 
@@ -179,7 +186,7 @@ if not resolved.is_relative_to(self.workspace_root):
 
 ## Technology Stack
 
-* **Frontend:** Next.js 14 (React 19) + TypeScript + Tailwind CSS (v4)
+* **Frontend:** Next.js 15 (React 19) + TypeScript + Tailwind CSS (v4)
 * **Backend:** FastAPI (Python 3.11+) + Pydantic v2 + structlog
 * **Orchestration:** Google Agent Development Kit (ADK)
 * **Model:** Gemini 2.5 Flash / Gemini 2.0 Flash
@@ -202,13 +209,13 @@ DevForge-AI/
 │   │   ├── prompts/            # System prompt markdown files
 │   │   └── main.py             # FastAPI entrypoint
 │   └── frontend/               # Next.js frontend workspace
-│       └── src/app/page.tsx    # Live workspace dashboard UI
+│       └── src/app/page.tsx    # Full UI: landing portal, live dashboard, artifact explorer
 ├── packages/
 │   ├── shared-schemas/         # Shared Pydantic data schemas
 │   └── mcp-client/             # Placeholder packaging library
 ├── docs/                       # PRDs & System Architecture
 ├── tests/
-│   └── backend-unit/           # 16/16 passing unit tests
+│   └── backend-unit/           # Unit tests covering context, adapters, and agents
 └── .env.example                # Clean environment variables configuration
 ```
 
@@ -230,9 +237,11 @@ cp .env.example .env
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
-| `GEMINI_API_KEY` | Your Google Gemini API Studio key | `""` |
-| `MOCK_LLM` | Fallback to mock data generation (runs offline) | `false` |
-| `LOG_LEVEL` | Application logging detail (DEBUG/INFO/WARNING) | `INFO` |
+| `GEMINI_API_KEY` | Your Google Gemini API key from Google AI Studio | `""` |
+| `MOCK_LLM` | Set to `true` to run offline with mock agent responses (no API calls) | `false` |
+| `LOG_LEVEL` | Application log verbosity (`DEBUG` / `INFO` / `WARNING`) | `INFO` |
+| `OUTPUT_DIR` | Directory where generated project blueprints are written | `./workspace` |
+| `MAX_REVISION_ATTEMPTS` | Maximum Engineering Director revision cycles before failure | `2` |
 
 ### Running Locally
 

@@ -93,10 +93,33 @@ class EngineeringDirectorAgent(BaseAgent):
             f"{docker_compose_yml}\n"
         )
 
+        # Check timeline logs for previous rejections
+        logs = context_manager.get_context_copy().execution_state.timeline_logs
+        rejections = [log for log in logs if "Director rejected blueprint" in log.message]
+        revision_count = len(rejections)
+        logger.info("engineering_director_revision_count", revision_count=revision_count)
+
+        additional_instruction = ""
+        if revision_count == 0:
+            additional_instruction = (
+                "\n\n[REVIEW TIMING CONTEXT]\n"
+                "This is the FIRST review iteration. Evaluate only against the original PRD, the generated "
+                "architecture, and generated artifacts. Do not reject for optional production improvements "
+                "(e.g., Kubernetes, API Gateway, rate limiting, production secret management). Classify these "
+                "as Recommendations, not Blocking. Accept the blueprint if everything required exists. Reject "
+                "ONLY for genuine missing core features or inconsistent artifacts."
+            )
+        else:
+            additional_instruction = (
+                "\n\n[REVIEW TIMING CONTEXT]\n"
+                "This is the FINAL review. You must accept the blueprint. Classify all remaining findings "
+                "exclusively as recommendations. Set approved to True and ensure critical_issues list is empty."
+            )
+
         # 3. Invoke LLM Adapter
         logger.info("engineering_director_invoking_llm", project_name=project_name)
         structured_response: EngineeringDirectorResponse = await self.llm_adapter.generate_structured_output(
-            system_instruction=system_prompt,
+            system_instruction=system_prompt + additional_instruction,
             prompt=user_prompt,
             response_schema=EngineeringDirectorResponse,
             temperature=0.2
@@ -108,8 +131,20 @@ class EngineeringDirectorAgent(BaseAgent):
             structured_response.critical_issues = []
             is_approved = True
 
-        if structured_response.critical_issues:
-            is_approved = False
+        if revision_count >= 1:
+            logger.info("engineering_director_forcing_approval", reason="Maximum revision attempts reached")
+            is_approved = True
+            # Store any remaining critical issues inside recommendations/major_issues instead of critical
+            if structured_response.critical_issues:
+                if not structured_response.major_issues:
+                    structured_response.major_issues = []
+                for issue in structured_response.critical_issues:
+                    structured_response.major_issues.append(f"[Remaining Blocking Issue] {issue}")
+                structured_response.critical_issues = []
+        else:
+            if structured_response.critical_issues:
+                is_approved = False
+
 
         # Gather combined feedback list for orchestrator
         feedback = []

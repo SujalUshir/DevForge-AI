@@ -184,7 +184,7 @@ sequenceDiagram
     
     User->>UI: 1. Launch local app in browser
     User->>UI: 2. Enter idea (e.g. "SaaS for booking dog sitters") & select tech stack
-    UI->>Server: 3. POST /api/projects/initiate
+    UI->>Server: 3. POST /api/projects/generate
     Server->>Server: 4. Initialize Shared Project Context
     Server->>Agents: 5. Start Execution Phase 1 (Planning)
     loop Visual Progress
