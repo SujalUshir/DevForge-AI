@@ -4,7 +4,7 @@
   <p>
     <img src="https://img.shields.io/badge/Python-3.11+-blue?logo=python&logoColor=white" alt="Python">
     <img src="https://img.shields.io/badge/FastAPI-0.139+-green?logo=fastapi&logoColor=white" alt="FastAPI">
-    <img src="https://img.shields.io/badge/Next.js-14+-black?logo=next.js&logoColor=white" alt="Next.js">
+    <img src="https://img.shields.io/badge/Next.js-15+-black?logo=next.js&logoColor=white" alt="Next.js">
     <img src="https://img.shields.io/badge/Google_ADK-v2.3.0-orange?logo=google&logoColor=white" alt="Google ADK">
     <img src="https://img.shields.io/badge/Model_Context_Protocol-v1.28-purple?logo=databricks&logoColor=white" alt="MCP">
     <img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT License">
@@ -179,7 +179,7 @@ if not resolved.is_relative_to(self.workspace_root):
 
 ## Technology Stack
 
-* **Frontend:** Next.js 14 (React 19) + TypeScript + Tailwind CSS (v4)
+* **Frontend:** Next.js 15 (React 19) + TypeScript + Tailwind CSS (v4)
 * **Backend:** FastAPI (Python 3.11+) + Pydantic v2 + structlog
 * **Orchestration:** Google Agent Development Kit (ADK)
 * **Model:** Gemini 2.5 Flash / Gemini 2.0 Flash
@@ -202,13 +202,13 @@ DevForge-AI/
 │   │   ├── prompts/            # System prompt markdown files
 │   │   └── main.py             # FastAPI entrypoint
 │   └── frontend/               # Next.js frontend workspace
-│       └── src/app/page.tsx    # Live workspace dashboard UI
+│       └── src/app/page.tsx    # Full UI: landing portal, live dashboard, artifact explorer
 ├── packages/
 │   ├── shared-schemas/         # Shared Pydantic data schemas
 │   └── mcp-client/             # Placeholder packaging library
 ├── docs/                       # PRDs & System Architecture
 ├── tests/
-│   └── backend-unit/           # 16/16 passing unit tests
+│   └── backend-unit/           # Unit tests covering context, adapters, and agents
 └── .env.example                # Clean environment variables configuration
 ```
 
@@ -230,9 +230,11 @@ cp .env.example .env
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
-| `GEMINI_API_KEY` | Your Google Gemini API Studio key | `""` |
-| `MOCK_LLM` | Fallback to mock data generation (runs offline) | `false` |
-| `LOG_LEVEL` | Application logging detail (DEBUG/INFO/WARNING) | `INFO` |
+| `GEMINI_API_KEY` | Your Google Gemini API key from Google AI Studio | `""` |
+| `MOCK_LLM` | Set to `true` to run offline with mock agent responses (no API calls) | `false` |
+| `LOG_LEVEL` | Application log verbosity (`DEBUG` / `INFO` / `WARNING`) | `INFO` |
+| `OUTPUT_DIR` | Directory where generated project blueprints are written | `./workspace` |
+| `MAX_REVISION_ATTEMPTS` | Maximum Engineering Director revision cycles before failure | `2` |
 
 ### Running Locally
 

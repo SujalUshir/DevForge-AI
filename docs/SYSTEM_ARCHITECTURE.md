@@ -2,7 +2,7 @@
 **Version:** 1.0  
 **Author:** Chief Software Architect  
 **Date:** July 3, 2026  
-**Status:** Under Review  
+**Status:** Final  
 
 ---
 
@@ -64,7 +64,7 @@ sequenceDiagram
 
     Developer->>UI: Input software idea (e.g. "Booking SaaS")
     Developer->>UI: Click "Generate Blueprint"
-    UI->>API: POST /api/projects/initiate
+    UI->>API: POST /api/projects/generate
     loop Watch Progress
         API-->>UI: Send SSE Events (logs, chats, timelines)
         UI-->>Developer: Render real-time progress & status cards
@@ -89,7 +89,7 @@ sequenceDiagram
     Controller->>Orchestrator: Initialize Context Object
     Orchestrator->>State: Write Initial Project Metadata
     Controller-->>UI: Return 202 Accepted (Stream ID)
-    UI->>Controller: Connect to /api/projects/stream/{id} (SSE)
+    UI->>Controller: Connect to /api/projects/{id}/stream (SSE)
     Orchestrator->>ADK: Trigger Phase 1 (Planning)
     loop Run Phase Loop
         ADK->>State: Write Planning details
@@ -186,20 +186,20 @@ The frontend Next.js application is designed for visual feedback and responsive 
 
 ```
 src/
-├── app/                  # Next.js App Router (Pages, Layouts)
-├── components/           # UI Elements (Timeline, Explorer, Cards)
-├── hooks/                # Custom React Hooks (SSE client, Theme)
-├── services/             # API Client wrapper
-├── types/                # Typescript Definitions
-└── styles/               # CSS Variables & Tailwind overrides
+└── app/                  # Next.js App Router (Pages, Layouts)
+    ├── page.tsx          # Full application UI (landing, workspace, artifact explorer)
+    ├── layout.tsx        # Root layout with metadata
+    └── globals.css       # Global CSS variables & Tailwind overrides
 ```
 
 ### 4.1 Frontend Component Designations
 
-* **Pages & Layouts:** Standard single-screen layout with a collapsible sidebar and a central workspace split-pane view.
-* **Live Agent Timeline (`/components/Timeline.tsx`):** A custom streaming UI showing agent avatars, message bubbles, and tool outputs. Uses smooth transitions to update as new SSE notifications arrive.
-* **Artifact Explorer (`/components/Explorer.tsx`):** Displays a directory structure. Files are loaded dynamically from the backend API.
-* **State Management (`/hooks/useWorkspace.ts`):** Custom hook that manages the local frontend state, connects to the SSE pipeline, parses JSON updates, and triggers screen transitions.
+* **Monolithic Page Component (`page.tsx`):** Contains all three application views in a single Next.js Client Component:
+  - **Landing Portal:** Project name/idea input form with tech stack selectors and a "Try Sample Project" shortcut.
+  - **Live Workspace Dashboard:** Subscribes to the SSE pipeline and renders a real-time department timeline and agent log feed.
+  - **Artifact Explorer:** Unlocked upon completion — displays the generated file tree and an integrated syntax-highlighted code viewer with a one-click ZIP download.
+* **State Management:** Local `useState` and `useEffect` hooks manage view transitions, SSE connections, log accumulation, and artifact data fetching.
+* **SSE Integration:** A native `EventSource` client connects to `/api/projects/{project_id}/stream` and dispatches events to update the UI in real time.
 
 ---
 
@@ -214,11 +214,11 @@ devforge-ai/
 │   └── frontend/               # Next.js Web App
 ├── packages/
 │   ├── shared-schemas/         # Shared JSON schemas & types
-│   └── mcp-client/             # Model Context Protocol wrapper
-├── docs/                       # Architecture, PRD, Guides
+│   └── mcp-client/             # Model Context Protocol wrapper (reserved for GitHub MCP)
+├── docs/                       # Architecture, PRD, Technical Audit
 ├── tests/
-│   ├── backend-unit/           # FastAPI unit tests
-│   └── frontend-unit/          # React component tests
+│   ├── backend-unit/           # Python unit tests (context, agents, orchestrator, MCP)
+│   └── frontend-unit/          # Reserved for future React component tests
 └── scripts/                    # Build, setup, and lint scripts
 ```
 
@@ -407,7 +407,7 @@ Every agent in the organization goes through a standardized state lifecycle mana
 ### 8.1 Lifecycle States
 
 #### Initialization
-* The agent container is instantiated. The ADK loads the agent's base instructions, system constraints, model configurations (Gemini 1.5 Flash/Pro), and API keys.
+* The agent container is instantiated. The ADK loads the agent's base instructions, system constraints, model configurations (Gemini 2.5 Flash), and API keys.
 
 #### Execution
 * The agent reads the authorized slice of the Shared Project Context (e.g., the Software Architect reads the functional specifications from the Planning slice). It processes the task and executes local tools (like filesystem reads) if required.
@@ -535,15 +535,19 @@ The FastAPI server exposes these APIs to support the Next.js workspace UI:
 
 ### 13.1 Endpoint Specifications
 
-#### `POST /api/projects/initiate`
+#### `POST /api/projects/generate`
 * **Purpose:** Start project generation.
 * **Payload:** User idea string and tech stack choices.
 * **Returns:** `202 Accepted` with a unique `project_id`.
 
-#### `GET /api/projects/stream/{project_id}`
+#### `GET /api/projects/{project_id}/stream`
 * **Purpose:** Stream generation progress in real-time.
 * **Protocol:** Server-Sent Events (SSE).
-* **Payload:** Returns logs, status updates, and agent chat messages.
+* **Payload:** Returns logs, status updates, and agent progress events.
+
+#### `GET /api/projects/{project_id}/status`
+* **Purpose:** Retrieve current project execution phase and progress percentage.
+* **Returns:** JSON with `status`, `current_phase`, `progress`, and `active_agents`.
 
 #### `GET /api/projects/{project_id}/artifacts`
 * **Purpose:** Fetch the generated file tree structure.
