@@ -1,7 +1,7 @@
 [project]
 name = "devforge-ai-backend"
 version = "0.1.0"
-description = "Add your description here"
+description = "DevForge AI backend — FastAPI service orchestrating multi-agent blueprint generation via Google ADK and Filesystem MCP."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
