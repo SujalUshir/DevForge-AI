@@ -129,7 +129,7 @@ class LLMAdapter:
             if api_key is None
             else api_key
         )
-        self.mock_mode = not self.api_key or os.getenv("MOCK_LLM", "false").lower() == "true"
+        self.mock_mode = not self.api_key or settings.mock_llm or os.getenv("MOCK_LLM", "false").lower() == "true"
         
         # Initialize ADK adapter if API key is present
         self.adk_adapter = None

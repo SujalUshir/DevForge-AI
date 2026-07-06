@@ -127,7 +127,14 @@ DevForge AI organizes its workforce into five distinct departments, overseen by 
 | **Review** | **Engineering Director**| Final sign-off & quality gate approval | Full Context | `approved`, `reviewer_feedback` |
 
 ### Revision Loops & Quality Gates
-If the **Engineering Director** rejects the generated blueprints (e.g., security flaws or database schema mismatches), the orchestrator transitions back to the **Engineering** phase with detailed feedback. This revision loop is capped at a maximum of 2 attempts to ensure execution bounds.
+If the **Engineering Director** detects issues in the generated blueprints, a revision loop is triggered. To prevent infinite regeneration:
+- **Capped Loop**: The review process is capped at a maximum of 2 iterations.
+- **Strict Scope**: The reviewer evaluates strictly against the original PRD, the generated architecture, and the generated artifacts, without introducing new requirements each iteration.
+- **Issue Classification**:
+  - *Blocking (Fails Review)*: Missing required PRD features, broken/inconsistent artifacts, and invalid schemas.
+  - *Recommendations (No Failure)*: Kubernetes configurations, API Gateway setups, rate limiting, secret management, performance optimizations, etc., unless explicitly required by the PRD.
+- **Final Iteration Auto-Approval**: After the second review, the blueprint is accepted, and any remaining non-critical issues are reported inside the Recommendations section instead of triggering another regeneration.
+
 
 ---
 

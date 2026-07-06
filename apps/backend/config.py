@@ -66,6 +66,7 @@ class Settings(BaseSettings):
     # ── Google AI ─────────────────────────────────────────────────
     # Required from Milestone 4 onward.
     gemini_api_key: str = ""
+    mock_llm: bool = False
 
     # ── Agent execution limits ────────────────────────────────────
     # Maximum revision loops the Engineering Director may request before failing.

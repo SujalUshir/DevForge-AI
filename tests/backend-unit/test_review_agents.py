@@ -167,10 +167,13 @@ async def test_orchestrator_revision_loops_and_retry_limit():
     orchestrator.register_agent("Engineering Director", director_agent)
 
     # Run the full pipeline
-    # The pipeline should run, fail the review, retry twice (revision loop 1 and 2), and then fail
+    # The pipeline should run, fail the first review, retry, and succeed on the second review (forcing approval)
     success = await orchestrator.execute_pipeline()
-    assert success is False
+    assert success is True
 
     ctx = ctx_manager.get_context_copy()
-    assert ctx.metadata.status == ProjectStatus.FAILED
-    assert ctx.execution_state.current_phase == ExecutionPhase.FAILED
+    assert ctx.metadata.status == ProjectStatus.COMPLETED
+    assert ctx.execution_state.current_phase == ExecutionPhase.COMPLETED
+    assert ctx.review.approved is True
+    assert len(ctx.review.critical_issues) == 0
+    assert any("Critical flaw present!" in issue for issue in ctx.review.major_issues)
