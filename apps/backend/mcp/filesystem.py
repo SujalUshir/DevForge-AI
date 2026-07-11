@@ -33,7 +33,7 @@ class FilesystemMCPClient:
         self.workspace_root.mkdir(parents=True, exist_ok=True)
 
         command = settings.mcp_node_command
-        args = ["-y", settings.filesystem_mcp_package, str(self.workspace_root)]
+        args = ["-y", "--prefer-offline", settings.filesystem_mcp_package, str(self.workspace_root)]
 
         self.client = GenericMCPClient(command=command, args=args, timeout=timeout)
 
