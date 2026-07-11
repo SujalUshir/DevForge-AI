@@ -57,9 +57,10 @@ class DesignLeadAgent(BaseAgent):
 
         # 4. Update planning slice in Context
         logger.info("design_lead_updating_context", project_name=project_name)
-        await context_manager.update_planning(
-            self.name,
-            lambda plan: setattr(plan, "ux_layout_specs", structured_response.ux_layout_specs)
-        )
+        
+        def update_planning_context(plan):
+            plan.ux_layout_specs = structured_response.ux_layout_specs
+
+        await context_manager.update_planning(self.name, update_planning_context)
 
         return structured_response.model_dump()
