@@ -4,13 +4,26 @@ from fastapi.testclient import TestClient
 from main import app
 from context.schema import ProjectStatus, ExecutionPhase
 
+from unittest.mock import AsyncMock, patch
+
 client = TestClient(app)
 
 
-def test_project_generation_api_lifecycle():
+@patch("mcp.filesystem.FilesystemMCPClient")
+@patch("generator.pipeline.FilesystemMCPClient")
+def test_project_generation_api_lifecycle(mock_pipeline_mcp, mock_mcp_def):
     """
     Verify complete project generation and status retrieval via FastAPI route handlers.
     """
+    # Setup mock client
+    mock_client = AsyncMock()
+    mock_client.connect = AsyncMock()
+    mock_client.write_file = AsyncMock()
+    mock_client.disconnect = AsyncMock()
+    
+    mock_pipeline_mcp.return_value = mock_client
+    mock_mcp_def.return_value = mock_client
+
     # 1. Post request to generate project
     payload = {
         "project_name": "TestAPIForge",
