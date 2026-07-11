@@ -161,8 +161,13 @@ class GenericMCPClient:
             for k, v in arguments.items():
                 if any(sk in k.lower() for sk in sensitive_keys):
                     safe_args[k] = "[REDACTED]"
-                elif isinstance(v, str) and len(v) > 200:
-                    safe_args[k] = v[:200] + f"... [truncated {len(v) - 200} chars]"
+                elif isinstance(v, str):
+                    if k == "content":
+                        safe_args[k] = f"<Content: {len(v)} chars>"
+                    elif len(v) > 200:
+                        safe_args[k] = v[:200].encode("ascii", "replace").decode("ascii") + f"... [truncated {len(v) - 200} chars]"
+                    else:
+                        safe_args[k] = v.encode("ascii", "replace").decode("ascii")
                 else:
                     safe_args[k] = v
 
