@@ -59,9 +59,10 @@ class ProductLeadAgent(BaseAgent):
 
         # 4. Update planning slice in Context
         logger.info("product_lead_updating_context", project_name=project_name)
-        await context_manager.update_planning(
-            self.name,
-            lambda plan: setattr(plan, "prd_markdown", structured_response.prd_markdown)
-        )
+        
+        def update_planning_context(plan):
+            plan.prd_markdown = structured_response.prd_markdown
+
+        await context_manager.update_planning(self.name, update_planning_context)
 
         return structured_response.model_dump()
