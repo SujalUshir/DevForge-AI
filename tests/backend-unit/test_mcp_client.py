@@ -26,14 +26,21 @@ def _import_official_mcp_exceptions():
     
     # Save and temporarily remove local mcp modules from sys.modules
     mcp_modules = {k: v for k, v in sys.modules.items() if k == "mcp" or k.startswith("mcp.")}
-    for k in mcp_modules:
-        del sys.modules[k]
+    for k in list(sys.modules.keys()):
+        if k == "mcp" or k.startswith("mcp."):
+            del sys.modules[k]
         
     try:
         from mcp import McpError
         return McpError
     finally:
         sys.path = original_path
+        # Remove the official mcp from sys.modules so subsequent imports load the local one
+        if "mcp" in sys.modules:
+            del sys.modules["mcp"]
+        for k in list(sys.modules.keys()):
+            if k.startswith("mcp."):
+                del sys.modules[k]
         # Restore local mcp modules in sys.modules
         for k, v in mcp_modules.items():
             sys.modules[k] = v
