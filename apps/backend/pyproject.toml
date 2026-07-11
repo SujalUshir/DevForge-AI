@@ -25,4 +25,4 @@ dev = [
 ]
 
 [tool.uv.sources]
-shared-schemas = { path = "../../packages/shared-schemas" }
+shared-schemas = { path = "../../packages/shared-schemas", editable = true }
