@@ -76,21 +76,20 @@ class SecurityLeadAgent(BaseAgent):
 
         # 4. Save to Context Manager
         logger.info("security_lead_updating_context", project_name=project_name)
-        await context_manager.update_validation(
-            self.name,
-            lambda val: [
-                setattr(val, "security_report_markdown", structured_response.security_report_markdown),
-                setattr(val, "auth_recommendations", structured_response.auth_recommendations),
-                setattr(val, "authorization_strategy", structured_response.authorization_strategy),
-                setattr(val, "secret_management", structured_response.secret_management),
-                setattr(val, "owasp_checklist", structured_response.owasp_checklist),
-                setattr(val, "api_security", structured_response.api_security),
-                setattr(val, "input_validation", structured_response.input_validation),
-                setattr(val, "rate_limiting", structured_response.rate_limiting),
-                setattr(val, "encryption_recommendations", structured_response.encryption_recommendations),
-                setattr(val, "dependency_risks", structured_response.dependency_risks),
-                setattr(val, "production_security_checklist", structured_response.production_checklist)
-            ]
-        )
+        
+        def update_validation_context(val):
+            val.security_report_markdown = structured_response.security_report_markdown
+            val.auth_recommendations = structured_response.auth_recommendations
+            val.authorization_strategy = structured_response.authorization_strategy
+            val.secret_management = structured_response.secret_management
+            val.owasp_checklist = structured_response.owasp_checklist
+            val.api_security = structured_response.api_security
+            val.input_validation = structured_response.input_validation
+            val.rate_limiting = structured_response.rate_limiting
+            val.encryption_recommendations = structured_response.encryption_recommendations
+            val.dependency_risks = structured_response.dependency_risks
+            val.production_security_checklist = structured_response.production_checklist
+
+        await context_manager.update_validation(self.name, update_validation_context)
 
         return structured_response.model_dump()

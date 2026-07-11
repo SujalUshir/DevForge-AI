@@ -80,20 +80,19 @@ class FrontendLeadAgent(BaseAgent):
 
         # 4. Save to Context Manager
         logger.info("frontend_lead_updating_context", project_name=project_name)
-        await context_manager.update_engineering(
-            self.name,
-            lambda eng: [
-                setattr(eng, "frontend_architecture", structured_response.frontend_architecture),
-                setattr(eng, "frontend_pages", structured_response.frontend_pages),
-                setattr(eng, "components", structured_response.components),
-                setattr(eng, "layout", structured_response.layout),
-                setattr(eng, "routing", structured_response.routing),
-                setattr(eng, "state_management", structured_response.state_management),
-                setattr(eng, "styling_approach", structured_response.styling_approach),
-                setattr(eng, "accessibility_checklist", structured_response.accessibility_checklist),
-                setattr(eng, "responsive_design", structured_response.responsive_design),
-                setattr(eng, "folder_structure_frontend", structured_response.folder_structure)
-            ]
-        )
+        
+        def update_engineering_context(eng):
+            eng.frontend_architecture = structured_response.frontend_architecture
+            eng.frontend_pages = structured_response.frontend_pages
+            eng.components = structured_response.components
+            eng.layout = structured_response.layout
+            eng.routing = structured_response.routing
+            eng.state_management = structured_response.state_management
+            eng.styling_approach = structured_response.styling_approach
+            eng.accessibility_checklist = structured_response.accessibility_checklist
+            eng.responsive_design = structured_response.responsive_design
+            eng.folder_structure_frontend = structured_response.folder_structure
+
+        await context_manager.update_engineering(self.name, update_engineering_context)
 
         return structured_response.model_dump()

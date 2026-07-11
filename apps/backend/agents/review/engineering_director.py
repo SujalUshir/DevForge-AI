@@ -155,24 +155,23 @@ class EngineeringDirectorAgent(BaseAgent):
 
         # 4. Save to Context Manager
         logger.info("engineering_director_updating_context", project_name=project_name, approved=is_approved)
-        await context_manager.update_review(
-            self.name,
-            lambda rev: [
-                setattr(rev, "approved", is_approved),
-                setattr(rev, "reviewer_feedback", feedback),
-                setattr(rev, "overall_score", structured_response.overall_score),
-                setattr(rev, "critical_issues", structured_response.critical_issues),
-                setattr(rev, "major_issues", structured_response.major_issues),
-                setattr(rev, "minor_issues", structured_response.minor_issues),
-                setattr(rev, "missing_sections", structured_response.missing_sections),
-                setattr(rev, "architecture_review", structured_response.architecture_review),
-                setattr(rev, "engineering_review", structured_response.engineering_review),
-                setattr(rev, "security_review", structured_response.security_review),
-                setattr(rev, "quality_review", structured_response.quality_review),
-                setattr(rev, "final_recommendations", structured_response.final_recommendations),
-                setattr(rev, "approval_summary", structured_response.approval_summary)
-            ]
-        )
+        
+        def update_review_context(rev):
+            rev.approved = is_approved
+            rev.reviewer_feedback = feedback
+            rev.overall_score = structured_response.overall_score
+            rev.critical_issues = structured_response.critical_issues
+            rev.major_issues = structured_response.major_issues
+            rev.minor_issues = structured_response.minor_issues
+            rev.missing_sections = structured_response.missing_sections
+            rev.architecture_review = structured_response.architecture_review
+            rev.engineering_review = structured_response.engineering_review
+            rev.security_review = structured_response.security_review
+            rev.quality_review = structured_response.quality_review
+            rev.final_recommendations = structured_response.final_recommendations
+            rev.approval_summary = structured_response.approval_summary
+
+        await context_manager.update_review(self.name, update_review_context)
 
         # Return dict matching both response schema and orchestrator expected feedback key
         return {

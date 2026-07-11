@@ -4,6 +4,10 @@ DevForge AI — CLI Demonstration Script.
 Runs the multi-agent forge pipeline sequentially using a combination of concrete
 Planning & Architecture agents (running under the LLM Adapter mock mode)
 and mock downstream agents, then exports the blueprints via the Artifact Generator.
+
+Usage:
+    $env:MOCK_LLM="true"; uv run python demo.py    # Run offline with mock responses
+    $env:MOCK_LLM="false"; uv run python demo.py   # Run online using live Gemini LLM API
 """
 
 import asyncio

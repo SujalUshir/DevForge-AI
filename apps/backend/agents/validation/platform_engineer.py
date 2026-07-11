@@ -73,23 +73,22 @@ class PlatformEngineerAgent(BaseAgent):
 
         # 4. Save to Context Manager
         logger.info("platform_engineer_updating_context", project_name=project_name)
-        await context_manager.update_validation(
-            self.name,
-            lambda val: [
-                # Platform Engineer contributes to both root fields (dockerfile, docker_compose_yml inside devops_configs)
-                # and custom attributes in validation context.
-                setattr(val.devops_configs, "dockerfile", structured_response.dockerfile),
-                setattr(val.devops_configs, "docker_compose_yml", structured_response.docker_compose_yml),
-                setattr(val, "deployment_strategy", structured_response.deployment_strategy),
-                setattr(val, "ci_cd_pipeline", structured_response.ci_cd_pipeline),
-                setattr(val, "cloud_recommendations", structured_response.cloud_recommendations),
-                setattr(val, "observability", structured_response.observability),
-                setattr(val, "monitoring", structured_response.monitoring),
-                setattr(val, "logging", structured_response.logging),
-                setattr(val, "scalability", structured_response.scalability),
-                setattr(val, "backup_strategy", structured_response.backup_strategy),
-                setattr(val, "production_readiness", structured_response.production_readiness)
-            ]
-        )
+        
+        def update_validation_context(val):
+            # Platform Engineer contributes to both root fields (dockerfile, docker_compose_yml inside devops_configs)
+            # and custom attributes in validation context.
+            val.devops_configs.dockerfile = structured_response.dockerfile
+            val.devops_configs.docker_compose_yml = structured_response.docker_compose_yml
+            val.deployment_strategy = structured_response.deployment_strategy
+            val.ci_cd_pipeline = structured_response.ci_cd_pipeline
+            val.cloud_recommendations = structured_response.cloud_recommendations
+            val.observability = structured_response.observability
+            val.monitoring = structured_response.monitoring
+            val.logging = structured_response.logging
+            val.scalability = structured_response.scalability
+            val.backup_strategy = structured_response.backup_strategy
+            val.production_readiness = structured_response.production_readiness
+
+        await context_manager.update_validation(self.name, update_validation_context)
 
         return structured_response.model_dump()

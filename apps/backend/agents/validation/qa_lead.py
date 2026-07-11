@@ -73,20 +73,19 @@ class QALeadAgent(BaseAgent):
 
         # 4. Save to Context Manager
         logger.info("qa_lead_updating_context", project_name=project_name)
-        await context_manager.update_validation(
-            self.name,
-            lambda val: [
-                setattr(val, "test_plan_markdown", structured_response.test_plan_markdown),
-                setattr(val, "unit_testing_strategy", structured_response.unit_testing_strategy),
-                setattr(val, "integration_tests", structured_response.integration_tests),
-                setattr(val, "api_tests", structured_response.api_tests),
-                setattr(val, "frontend_testing", structured_response.frontend_testing),
-                setattr(val, "edge_cases", structured_response.edge_cases),
-                setattr(val, "acceptance_criteria", structured_response.acceptance_criteria),
-                setattr(val, "regression_testing", structured_response.regression_testing),
-                setattr(val, "manual_testing_checklist", structured_response.manual_testing_checklist),
-                setattr(val, "quality_risks", structured_response.quality_risks)
-            ]
-        )
+        
+        def update_validation_context(val):
+            val.test_plan_markdown = structured_response.test_plan_markdown
+            val.unit_testing_strategy = structured_response.unit_testing_strategy
+            val.integration_tests = structured_response.integration_tests
+            val.api_tests = structured_response.api_tests
+            val.frontend_testing = structured_response.frontend_testing
+            val.edge_cases = structured_response.edge_cases
+            val.acceptance_criteria = structured_response.acceptance_criteria
+            val.regression_testing = structured_response.regression_testing
+            val.manual_testing_checklist = structured_response.manual_testing_checklist
+            val.quality_risks = structured_response.quality_risks
+
+        await context_manager.update_validation(self.name, update_validation_context)
 
         return structured_response.model_dump()

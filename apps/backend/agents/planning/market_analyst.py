@@ -57,9 +57,10 @@ class MarketAnalystAgent(BaseAgent):
 
         # 4. Update planning slice in Context
         logger.info("market_analyst_updating_context", project_name=project_name)
-        await context_manager.update_planning(
-            self.name,
-            lambda plan: setattr(plan, "competitor_brief_markdown", structured_response.competitor_brief_markdown)
-        )
+        
+        def update_planning_context(plan):
+            plan.competitor_brief_markdown = structured_response.competitor_brief_markdown
+
+        await context_manager.update_planning(self.name, update_planning_context)
 
         return structured_response.model_dump()
