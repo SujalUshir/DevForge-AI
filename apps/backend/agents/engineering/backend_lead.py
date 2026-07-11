@@ -75,19 +75,18 @@ class BackendLeadAgent(BaseAgent):
 
         # 4. Save to Context Manager
         logger.info("backend_lead_updating_context", project_name=project_name)
-        await context_manager.update_engineering(
-            self.name,
-            lambda eng: [
-                setattr(eng, "api_spec_yaml", structured_response.api_spec_yaml),
-                setattr(eng, "database_schema_sql", structured_response.database_schema_sql),
-                setattr(eng, "backend_main_py", structured_response.backend_main_py),
-                setattr(eng, "backend_architecture", structured_response.backend_architecture),
-                setattr(eng, "backend_services", structured_response.backend_services),
-                setattr(eng, "api_design", structured_response.api_design),
-                setattr(eng, "database_notes", structured_response.database_notes),
-                setattr(eng, "folder_structure_backend", structured_response.folder_structure),
-                setattr(eng, "security_notes", structured_response.security_notes)
-            ]
-        )
+        
+        def update_engineering_context(eng):
+            eng.api_spec_yaml = structured_response.api_spec_yaml
+            eng.database_schema_sql = structured_response.database_schema_sql
+            eng.backend_main_py = structured_response.backend_main_py
+            eng.backend_architecture = structured_response.backend_architecture
+            eng.backend_services = structured_response.backend_services
+            eng.api_design = structured_response.api_design
+            eng.database_notes = structured_response.database_notes
+            eng.folder_structure_backend = structured_response.folder_structure
+            eng.security_notes = structured_response.security_notes
+
+        await context_manager.update_engineering(self.name, update_engineering_context)
 
         return structured_response.model_dump()
