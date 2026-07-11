@@ -60,12 +60,11 @@ class PrincipalArchitectAgent(BaseAgent):
 
         # 4. Update architecture slice in Context
         logger.info("principal_architect_updating_context", project_name=project_name)
-        await context_manager.update_architecture(
-            self.name,
-            lambda arch: [
-                setattr(arch, "topology_markdown", structured_response.topology_markdown),
-                setattr(arch, "design_rationale", structured_response.design_rationale)
-            ]
-        )
+        
+        def update_architecture_context(arch):
+            arch.topology_markdown = structured_response.topology_markdown
+            arch.design_rationale = structured_response.design_rationale
+
+        await context_manager.update_architecture(self.name, update_architecture_context)
 
         return structured_response.model_dump()
