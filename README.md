@@ -1,64 +1,72 @@
-<div align="center">
-  <h1>⚡ DevForge AI</h1>
-  <p><strong>An autonomous AI software company that transforms ideas into production-ready engineering blueprints via multi-agent collaboration.</strong></p>
-  <p>
-    <img src="https://img.shields.io/badge/Python-3.11+-blue?logo=python&logoColor=white" alt="Python">
-    <img src="https://img.shields.io/badge/FastAPI-0.139+-green?logo=fastapi&logoColor=white" alt="FastAPI">
-    <img src="https://img.shields.io/badge/Next.js-15+-black?logo=next.js&logoColor=white" alt="Next.js">
-    <img src="https://img.shields.io/badge/Google_ADK-v2.3.0-orange?logo=google&logoColor=white" alt="Google ADK">
-    <img src="https://img.shields.io/badge/Model_Context_Protocol-v1.28-purple?logo=databricks&logoColor=white" alt="MCP">
-    <img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT License">
-  </p>
-</div>
+# ⚡ DevForge AI
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11+-blue?logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-0.139+-green?logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Next.js-15+-black?logo=next.js&logoColor=white" alt="Next.js">
+  <img src="https://img.shields.io/badge/Google_ADK-v2.3.0-orange?logo=google&logoColor=white" alt="Google ADK">
+  <img src="https://img.shields.io/badge/Model_Context_Protocol-v1.28-purple?logo=databricks&logoColor=white" alt="MCP">
+  <img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT License">
+</p>
+
+An autonomous, multi-agent software engineering SWARM that transforms raw product ideas into production-ready engineering blueprints and project scaffold packages via cooperative department collaboration.
 
 ---
 
 ## 📖 Table of Contents
 - [What is DevForge AI?](#what-is-devforge-ai)
 - [Motivation](#motivation)
-- [System Architecture](#system-architecture)
-- [Agent Swarm & Workflow](#agent-swarm--workflow)
-- [Screenshots & UI Walkthrough](#screenshots--ui-walkthrough)
-- [Google ADK & MCP Integration](#google-adk--mcp-integration)
+- [Key Features](#key-features)
+- [Architecture Overview](#architecture-overview)
+- [Folder Structure](#folder-structure)
 - [Technology Stack](#technology-stack)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Environment Variables](#environment-variables)
-  - [Running Locally](#running-locally)
-- [Verification & Tests](#verification--tests)
-- [Demo Script](#demo-script)
-- [Future Work](#future-work)
+- [Installation & Setup](#installation--setup)
+- [Environment Variables](#environment-variables)
+- [Running Locally](#running-locally)
+- [Development Workflow](#development-workflow)
+- [Build Instructions](#build-instructions)
+- [Deployment](#deployment)
+- [API Overview](#api-overview)
+- [Agent Swarm Architecture](#agent-swarm-architecture)
+- [Roadmap](#roadmap)
+- [Known Limitations & Trade-offs](#known-limitations--trade-offs)
+- [Future Improvements](#future-improvements)
 - [License](#license)
+- [Contributing](#contributing)
 
 ---
 
 ## What is DevForge AI?
 
-DevForge AI is an autonomous, multi-agent software development platform acting as a virtual software company. Submit a product concept, and a team of 11 specialized AI agents—structured into Planning, Architecture, Engineering, Validation, and Review departments—collaborates to produce a complete, production-ready engineering blueprint and document package. 
-
-**This is not a chatbot. It is a structured AI organization.**
+DevForge AI is an autonomous software development swarm operating as a virtual software company. Given a user idea, a swarm of **11 specialized AI agents** structured into Planning, Architecture, Engineering, Validation, and Review departments collaborate under the supervision of a CEO agent. The final output is a complete, production-ready blueprint including wireframe layouts, OpenAPI specifications, database DDLs, containerization configs, and threat models.
 
 ---
 
 ## Motivation
 
-Traditional single-prompt code generators and chatbots suffer from key limitations:
-1. **Context Drift:** As conversations grow, the model loses track of requirements and introduces regressions.
-2. **Lack of Peer Review:** A single model generation does not undergo checks and balances before writing files.
-3. **No Sandbox Controls:** Writing files directly on the host machine bypasses security boundaries.
+Traditional single-prompt generators suffer from:
+1. **Context Drift:** Models lose track of large context scopes and overwrite previous functional features.
+2. **Lack of Peer Review:** Code is generated without a verification mechanism, leading to architectural bugs.
+3. **Sandbox Traversal Risk:** Executing filesystem operations without boundaries bypasses local security safeguards.
 
-**DevForge AI** addresses these problems by:
-* Dividing tasks among **11 specialized agents** with strict input/output boundaries.
-* Implementing a **Shared Project Context** with an asynchronous lock enforcing the *Single Writer Principle*.
-* Integrating **Google ADK** for robust structured output schemas.
-* Routing all disk operations through a **Filesystem MCP (Model Context Protocol) Server** to enforce path traversal safety and restrict access to the target workspace.
+**DevForge AI** solves these issues with:
+- **11 Role-Isolated Agents** communicating via structured interfaces.
+- **Shared Project Context Manager** using an async lock enforcing the *Single Writer Principle*.
+- **Google Agent Development Kit (ADK)** to enforce structured Pydantic schema validation.
+- **Model Context Protocol (MCP) filesystem server** running inside a sandboxed target folder.
 
 ---
 
-## System Architecture
+## Key Features
 
-The platform runs as a Next.js web application connected to a local FastAPI service. The orchestrator delegates tasks to the Google ADK swarm, validates schemas, and utilizes the Filesystem MCP client to scaffold directories.
+- **Sequential & Parallel Phases:** Parallel departments (Planning, Engineering, Validation) run concurrently to reduce pipeline latency.
+- **Revision Loops & Quality Gates:** The Engineering Director evaluates the swarm output against the PRD. Critical failures trigger a scoped revision cycle (capped at 2 attempts to prevent loops).
+- **Glassmorphic Swarm Dashboard:** Next.js 15 UI displaying real-time SSE execution logs, timeline logs, and an integrated blueprint file explorer.
+- **Zip Blueprints Exporter:** Downloads the generated folder structure with a single click.
+
+---
+
+## Architecture Overview
 
 ```mermaid
 graph TD
@@ -90,7 +98,7 @@ graph TD
         
         CEO --> PLAN --> ARCH --> ENG --> VAL --> REV
     end
-
+    
     subgraph Tools [Local Environment Bridges]
         MCP[Filesystem MCP Client]
         Disk[(Local Workspace Directory)]
@@ -108,191 +116,216 @@ graph TD
 
 ---
 
-## Agent Swarm & Workflow
+## Folder Structure
 
-DevForge AI organizes its workforce into five distinct departments, overseen by the CEO and audited by the Engineering Director:
-
-| Department | Role | Responsibility | Input Context | Output Fields |
-| :--- | :--- | :--- | :--- | :--- |
-| — | **CEO** | Orchestrates bootstrap & refines project vision | User Idea | Project metadata |
-| **Planning** | **Product Lead** | Functional PRD & user stories | Metadata | `prd_markdown` |
-| **Planning** | **Market Analyst** | Competitor analysis & SWOT brief | Metadata | `competitor_brief_markdown` |
-| **Planning** | **Design Lead** | UX layout & wireframe specifications | Metadata | `ux_layout_specs` |
-| **Architecture** | **Principal Architect** | System topology & architectural design | Planning outputs | `topology_markdown`, `design_rationale` |
-| **Engineering** | **Backend Lead** | Database DDL & API OpenAPI schemas | Architecture outputs | `api_spec_yaml`, `database_schema_sql` |
-| **Engineering** | **Frontend Lead** | UI router skeletons & component design | Architecture outputs | `routing`, `frontend_pages`, `components`, `layout` |
-| **Validation** | **Security Lead** | Threat modeling & validation checks | Code artifacts | `security_report_markdown` |
-| **Validation** | **QA Lead** | Integration and unit testing scenarios | Code artifacts | `test_plan_markdown` |
-| **Validation** | **Platform Engineer** | Dockerfiles & CI/CD workflows | Code artifacts | `dockerfile`, `docker_compose_yml` |
-| **Review** | **Engineering Director**| Final sign-off & quality gate approval | Full Context | `approved`, `reviewer_feedback` |
-
-### Revision Loops & Quality Gates
-If the **Engineering Director** detects issues in the generated blueprints, a revision loop is triggered. To prevent infinite regeneration:
-- **Capped Loop**: The review process is capped at a maximum of 2 iterations.
-- **Strict Scope**: The reviewer evaluates strictly against the original PRD, the generated architecture, and the generated artifacts, without introducing new requirements each iteration.
-- **Issue Classification**:
-  - *Blocking (Fails Review)*: Missing required PRD features, broken/inconsistent artifacts, and invalid schemas.
-  - *Recommendations (No Failure)*: Kubernetes configurations, API Gateway setups, rate limiting, secret management, performance optimizations, etc., unless explicitly required by the PRD.
-- **Final Iteration Auto-Approval**: After the second review, the blueprint is accepted, and any remaining non-critical issues are reported inside the Recommendations section instead of triggering another regeneration.
-
-
----
-
-## Screenshots & UI Walkthrough
-
-The Next.js frontend uses a premium, modern glassmorphic theme designed to provide maximum visibility into the agent swarm:
-
-### 1. The Landing Portal
-* **Visuals:** Clean, dark grid design featuring card overlays for all 11 agent roles.
-* **Functionality:** Input form to launch custom parameters, along with a "Try Sample Project" quick-start button.
-
-### 2. Live Workspace Dashboard
-* **Visuals:** Left-side department timeline highlighting active phases (Planning, Architecture, etc.), and a central active agent status card.
-* **Functionality:** Subscribes to the FastAPI Server-Sent Events (SSE) stream, outputting real-time log actions.
-
-### 3. Blueprint Explorer & Downloader
-* **Visuals:** Split-pane interface containing a directory tree of generated artifacts and an integrated syntax-highlighted code viewer.
-* **Functionality:** Real-time markdown rendering and a single-click "Download ZIP" builder bundle.
-
----
-
-## Google ADK & MCP Integration
-
-### Google Agent Development Kit (ADK)
-All agents leverage the Google Python ADK (`google-adk` v2.3.0) to maintain structured output formatting:
-```python
-agent = LlmAgent(
-    name="devforge_structured_agent",
-    model="gemini-2.5-flash",
-    instruction=system_instruction,
-    output_schema=response_schema,
-    output_key="structured_response"
-)
-runner = Runner(app_name="devforge-ai", agent=agent, session_service=self.session_service)
-async for event in runner.run_async(...):
-    # Parse state_delta for Pydantic schema validation
 ```
-
-### Model Context Protocol (MCP)
-To guarantee path validation and workspace safety, all disk operations are dispatched to an official `@modelcontextprotocol/server-filesystem` server executing over standard I/O (stdio). Absolute path resolution prevents path traversal outside the sandboxed `./workspace/` directory:
-```python
-# Path traversal validation check
-resolved = Path(path_str).resolve()
-if not resolved.is_relative_to(self.workspace_root):
-    raise MCPPathTraversalError("Access denied: path traversal attempt")
+DevForge-AI/
+├── apps/
+│   ├── backend/                # FastAPI + Google ADK backend app
+│   │   ├── agents/             # Role-isolated agent classes
+│   │   ├── api/                # FastAPI routers & routes (SSE, projects)
+│   │   ├── context/            # Shared Project Context Manager and Schemas
+│   │   ├── generator/          # Scaffolder invoking Filesystem MCP
+│   │   ├── mcp/                # Filesystem and GitHub MCP clients
+│   │   ├── prompts/            # Raw prompt files loaded via PromptLoader
+│   │   └── main.py             # Backend FastAPI entrypoint
+│   └── frontend/               # Next.js frontend workspace portal
+│       └── src/app/page.tsx    # Workspace and explorer views
+├── packages/
+│   ├── shared-schemas/         # Shared Pydantic data schemas
+│   └── mcp-client/             # Placeholder packaging library
+├── docs/                       # Project setup guides & architectures
+├── tests/
+│   └── backend-unit/           # Pytest suites covering agents & routes
+├── AUDIT.md                    # Technical code audit report
+├── CHANGELOG.md                # Project changelog
+└── LICENSE                     # MIT license
 ```
 
 ---
 
 ## Technology Stack
 
-* **Frontend:** Next.js 15 (React 19) + TypeScript + Tailwind CSS (v4)
-* **Backend:** FastAPI (Python 3.11+) + Pydantic v2 + structlog
-* **Orchestration:** Google Agent Development Kit (ADK)
-* **Model:** Gemini 2.5 Flash / Gemini 2.0 Flash
-* **Protocol:** Model Context Protocol (MCP) stdio Filesystem
-* **Package Manager:** uv (Python) / npm (Node.js)
+- **Frontend Framework:** Next.js 15 (React 19) + TypeScript + Tailwind CSS (v4)
+- **Backend Framework:** FastAPI (Python 3.11+) + Pydantic v2 + structlog
+- **Agent Orchestration:** Google Agent Development Kit (ADK) v2.3.0
+- **Supported Models:** Gemini 2.5 Flash / Gemini 2.0 Flash
+- **Local Sandbox Protocol:** Model Context Protocol (MCP) stdio Filesystem
+- **Package Managers:** uv (Python) / npm (Node.js)
 
 ---
 
-## Project Structure
-
-```
-DevForge-AI/
-├── apps/
-│   ├── backend/                # FastAPI + Google ADK backend
-│   │   ├── agents/             # 11 department agent classes
-│   │   ├── api/                # FastAPI routing & SSE streams
-│   │   ├── context/            # Shared Project Context manager
-│   │   ├── generator/          # Scaffolder invoking Filesystem MCP
-│   │   ├── mcp/                # Generic and Filesystem MCP clients
-│   │   ├── prompts/            # System prompt markdown files
-│   │   └── main.py             # FastAPI entrypoint
-│   └── frontend/               # Next.js frontend workspace
-│       └── src/app/page.tsx    # Full UI: landing portal, live dashboard, artifact explorer
-├── packages/
-│   ├── shared-schemas/         # Shared Pydantic data schemas
-│   └── mcp-client/             # Placeholder packaging library
-├── docs/                       # PRDs & System Architecture
-├── tests/
-│   └── backend-unit/           # Unit tests covering context, adapters, and agents
-└── .env.example                # Clean environment variables configuration
-```
-
----
-
-## Getting Started
+## Installation & Setup
 
 ### Prerequisites
-* Python 3.11+
-* Node.js 20+
-* [uv](https://docs.astral.sh/uv/) python manager
-* A Gemini API Key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+- Python 3.11+
+- Node.js 20+
+- [uv](https://docs.astral.sh/uv/) python manager
+- Google Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
 
-### Environment Variables
-Copy `.env.example` to `.env` in the root and add your Gemini API Key:
+### 1. Root Configuration
+Clone the repository and copy the example environment file:
 ```bash
 cp .env.example .env
 ```
+Open `.env` and fill in your details:
+```env
+GEMINI_API_KEY="your-google-ai-studio-api-key"
+```
 
-| Variable | Description | Default |
-| :--- | :--- | :--- |
-| `GEMINI_API_KEY` | Your Google Gemini API key from Google AI Studio | `""` |
-| `MOCK_LLM` | Set to `true` to run offline with mock agent responses (no API calls) | `false` |
-| `LOG_LEVEL` | Application log verbosity (`DEBUG` / `INFO` / `WARNING`) | `INFO` |
-| `OUTPUT_DIR` | Directory where generated project blueprints are written | `./workspace` |
-| `MAX_REVISION_ATTEMPTS` | Maximum Engineering Director revision cycles before failure | `2` |
-
-### Running Locally
-
-#### 1. Start the Backend
+### 2. Backend Setup
+Navigate to the backend app, synchronize Python virtual environments, and install the shared-schemas package:
 ```bash
 cd apps/backend
 uv sync
-uv run uvicorn main:app --reload --port 8000
 ```
-FastAPI runs on `http://127.0.0.1:8000`. You can inspect endpoints via `/docs`.
 
-#### 2. Start the Frontend
+### 3. Frontend Setup
+Navigate to the frontend app and install dependencies:
 ```bash
 cd apps/frontend
 npm install
+```
+
+---
+
+## Environment Variables
+
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `GEMINI_API_KEY` | Your Google AI Studio API key | `""` |
+| `MOCK_LLM` | Set to `true` to run offline using structured mock responses | `false` |
+| `LOG_LEVEL` | Application logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
+| `OUTPUT_DIR` | Absolute or relative folder path where blueprints are written | `./workspace` |
+| `MAX_REVISION_ATTEMPTS` | Maximum number of review iteration loops before pipeline failure | `2` |
+| `AGENT_TIMEOUT_SECONDS` | Timeout limit for a single agent API execution call | `120` |
+| `AGENT_MAX_RETRIES` | Retries count before marking agent execution as failed | `3` |
+
+---
+
+## Running Locally
+
+### 1. Start FastAPI Server
+From the `apps/backend/` directory:
+```bash
+uv run uvicorn main:app --reload --port 8000
+```
+FastAPI runs on `http://127.0.0.1:8000`. Endpoint swagger documentation can be viewed at `http://127.0.0.1:8000/docs`.
+
+### 2. Start Next.js Development Server
+From the `apps/frontend/` directory:
+```bash
 npm run dev
 ```
-Open `http://localhost:3000` to interact with the workspace portal.
+Open `http://localhost:3000` to access the workspace.
 
 ---
 
-## Verification & Tests
+## Development Workflow
 
-To execute the 16 unit test suites covering context synchronization, adapters, and prompt managers:
+### Swarm Execution Cycle
+1. **CEO Agent Bootstrap:** Refines the raw project concept, defines stack suggestions, and updates metadata.
+2. **Planning Phase (Parallel):** `Product Lead`, `Market Analyst`, and `Design Lead` generate the PRD, competitor SWOTS, and UX blueprints concurrently.
+3. **Architecture Phase (Sequential):** `Principal Architect` designs the core topology and Mermaid system flows.
+4. **Engineering Phase (Parallel):** `Backend Lead` and `Frontend Lead` build OpenAPI schemas, DDLs, and routers.
+5. **Validation Phase (Parallel):** `Security Lead`, `QA Lead`, and `Platform Engineer` build threat reports, test checklists, and docker-composes.
+6. **Review Phase (Sequential):** `Engineering Director` evaluates all slices. Returns `approved=True` to complete, or triggers revisions if criteria are not met.
+
+---
+
+## Build Instructions
+
+### Backend Package Compilation
+Build local wheel distribution packages for packages like shared-schemas:
 ```bash
-cd apps/backend
-uv run pytest
+cd packages/shared-schemas
+python -m pip install --upgrade build
+python -m build
+```
+
+### Frontend Production Build
+To build the Next.js portal application for production deployment:
+```bash
+cd apps/frontend
+npm run build
 ```
 
 ---
 
-## Demo Script
+## Deployment
 
-This script outlines a 5-minute walkthrough for the Google Capstone submission:
+Deploying the backend uvicorn service is standard:
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+```
 
-* **0:00 - 1:00 (Introduction):** Highlight the platform overview, motivation, and system architecture. Showcase the Next.js landing portal.
-* **1:00 - 2:00 (Startup):** Click "⚡ Try Sample Project". Point out how metadata is initialized in the shared context block.
-* **2:00 - 3:30 (Live Progress):** Highlight the Server-Sent Events (SSE) log timeline. Explain the sequential and parallel department phases.
-* **3:30 - 4:30 (Blueprint Explorer):** When completed, click through files (`PRD.md`, `database_schema.sql`, `api_spec.yaml`) in the code viewer.
-* **4:30 - 5:00 (ZIP Download):** Click "Download Blueprint" to compress and download the file bundle.
+> [!WARNING]
+> Scaling uvicorn horizontally to multiple workers breaks the current in-memory status dictionary. For multi-node or multi-process deployments, you must configure a persistent database and Redis session queue.
 
 ---
 
-## Future Work
+## API Overview
 
-* **GitHub MCP Publishing:** Implement V2 roadmap to directly push scaffolded blueprints to private/public repositories.
-* **AWS S3 Cloud Persistence:** Transition context manager from local files to S3 buckets.
-* **Mock Compilation Sandbox:** Build an execution container executing backend unit tests against the generated skeletal code.
+- `POST /api/projects/generate` — Submits a user idea request and runs the background Swarm pipeline.
+- `GET /api/projects/{project_id}/status` — Checks progress percentage and active agent status.
+- `GET /api/projects/{project_id}/stream` — Server-Sent Events (SSE) progress log stream.
+- `GET /api/projects/{project_id}/artifacts` — Lists generated file schemas and code contents.
+- `GET /api/projects/{project_id}/download` — Compiles and downloads workspace files as a ZIP bundle.
+- `GET /api/projects/health` — API health check endpoint.
+
+---
+
+## Agent Swarm Architecture
+
+| Department | Agent Name | Role | Inputs | Outputs |
+| :--- | :--- | :--- | :--- | :--- |
+| — | **CEO Agent** | SWARM Initiator | User Concept | Refined metadata, stacks |
+| **Planning** | **Product Lead** | Functional PRD Designer | Metadata | `prd_markdown` |
+| **Planning** | **Market Analyst** | Competitor SWOTS auditor | Metadata | `competitor_brief_markdown` |
+| **Planning** | **Design Lead** | UX Wireframe strategist | Metadata | `ux_layout_specs` |
+| **Architecture** | **Principal Architect**| Topologist | Planning output | `topology_markdown`, `design_rationale` |
+| **Engineering** | **Backend Lead** | Database DDL and API spec compiler | Architecture | `api_spec_yaml`, `database_schema_sql` |
+| **Engineering** | **Frontend Lead** | Component / UI route mapper | Architecture | `routing`, `frontend_pages`, `components` |
+| **Validation** | **Security Lead** | OWASP and threat analyzer | Engineering | `security_report_markdown` |
+| **Validation** | **QA Lead** | Unit & integration test planner | Engineering | `test_plan_markdown` |
+| **Validation** | **Platform Engineer** | Docker / deployment builder | Engineering | `dockerfile`, `docker_compose_yml` |
+| **Review** | **Engineering Director**| Quality checker | Full Context | `approved` (Bool), feedback list |
+
+---
+
+## Roadmap
+
+- **V2.0.0 GitHub Publishing MCP:** Automatically export generated blueprints to a targeted GitHub repo using a GitHub MCP server connection.
+- **Persistent DB Contexts:** Migrate active contexts from in-memory dicts to a local SQLite/PostgreSQL engine.
+- **Mock Sandbox Runner:** Spawn a local Docker container compiling backend specs to check for runtime syntax failures.
+
+---
+
+## Known Limitations & Trade-offs
+
+- **Non-Reentrant Locks:** `ContextManager` uses `asyncio.Lock`. If an agent tries to log an action during a locked mutation block, execution deadlocks. Agents must log action milestones strictly outside of write blocks.
+- **In-Memory Registry:** The server cannot scale horizontally without replacing the dictionary registry with shared databases.
+
+---
+
+## Future Improvements
+
+- Replace the standard asyncio Lock with a re-entrant lock scheme.
+- Add comprehensive Vitest test cases for frontend Next.js modules.
+- Centralize context logging using centralized lock manager services (e.g. Redis).
 
 ---
 
 ## License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Contributing
+
+We welcome community pull requests.
+1. Fork the repo and create your branch: `git checkout -b feature/my-feature`.
+2. Format your Python files using black/ruff and Next.js styles.
+3. Keep commit histories modular and logical.
+4. Ensure all unit tests (`uv run pytest`) pass successfully before submitting PRs.
